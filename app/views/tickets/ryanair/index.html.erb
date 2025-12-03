@@ -1,0 +1,191 @@
+<div class="space-y-6">
+  <h1 class="text-2xl font-bold text-gray-900">Ryanair Flight Search</h1>
+
+  <!-- Search Form -->
+  <div class="bg-white shadow rounded-lg" data-controller="ryanair-search">
+    <div class="px-6 py-4 border-b border-gray-200">
+      <h2 class="text-lg font-medium text-gray-900">Search for Flights from Riga (RIX)</h2>
+    </div>
+
+    <%= form_with url: tickets_ryanair_path, method: :post, class: "px-6 py-4" do |f| %>
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <!-- Destination -->
+        <div>
+          <label for="destination_code" class="block text-sm font-medium text-gray-700">Destination</label>
+          <select name="destination_code" id="destination_code"
+                  class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                  data-ryanair-search-target="destinationSelect"
+                  data-action="change->ryanair-search#destinationChanged">
+            <option value="">Select destination</option>
+            <% @destinations.each do |destination| %>
+              <option value="<%= destination.code %>"><%= destination.display_name %></option>
+            <% end %>
+          </select>
+        </div>
+
+        <!-- Date Out -->
+        <div data-ryanair-search-target="dateOutContainer" class="hidden">
+          <label for="date_out" class="block text-sm font-medium text-gray-700">Flight Out</label>
+          <select name="date_out" id="date_out"
+                  class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                  data-ryanair-search-target="dateOutSelect"
+                  data-action="change->ryanair-search#dateOutChanged">
+            <option value="">Select a date</option>
+          </select>
+        </div>
+
+        <!-- Date In -->
+        <div data-ryanair-search-target="dateInContainer" class="hidden">
+          <label for="date_in" class="block text-sm font-medium text-gray-700">Flight Back</label>
+          <select name="date_in" id="date_in"
+                  class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                  data-ryanair-search-target="dateInSelect"
+                  data-action="change->ryanair-search#dateInChanged">
+            <option value="">Select a date</option>
+          </select>
+        </div>
+
+        <!-- Submit Button -->
+        <div class="flex items-end">
+          <button type="submit"
+                  class="w-full inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                  data-ryanair-search-target="submitButton"
+                  disabled>
+            Save Flight Search
+          </button>
+        </div>
+      </div>
+
+      <!-- Trip Duration -->
+      <div class="mt-4">
+        <span class="text-sm text-gray-500" data-ryanair-search-target="tripDuration"></span>
+      </div>
+
+      <!-- Loading Indicator -->
+      <div data-ryanair-search-target="loadingIndicator" class="hidden mt-4">
+        <div class="flex items-center">
+          <svg class="animate-spin h-5 w-5 text-indigo-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          <span class="ml-2 text-sm text-gray-500">Loading available dates...</span>
+        </div>
+      </div>
+    <% end %>
+  </div>
+
+  <!-- Saved Searches -->
+  <div class="bg-white shadow rounded-lg">
+    <div class="px-6 py-4 border-b border-gray-200">
+      <h2 class="text-lg font-medium text-gray-900">Your Saved Flight Searches</h2>
+    </div>
+
+    <% if @saved_searches.any? %>
+      <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+          <thead class="bg-gray-50">
+            <tr>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Destination</th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date Out</th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date In</th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Duration</th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price Out</th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price In</th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="bg-white divide-y divide-gray-200">
+            <% @saved_searches.each do |search| %>
+              <tr>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <div class="text-sm font-medium text-gray-900"><%= search.ryanair_destination.display_name %></div>
+                  <div class="text-sm text-gray-500"><%= search.ryanair_destination.country_name %></div>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  <%= search.date_out.strftime("%b %d, %Y") %>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  <%= search.date_in.strftime("%b %d, %Y") %>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  <%= search.trip_duration %> days
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  <% if search.price_out %>
+                    &euro;<%= number_with_precision(search.price_out, precision: 2) %>
+                  <% else %>
+                    -
+                  <% end %>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  <% if search.price_in %>
+                    &euro;<%= number_with_precision(search.price_in, precision: 2) %>
+                  <% else %>
+                    -
+                  <% end %>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <% if search.total_price %>
+                    <span class="text-sm font-semibold text-green-600">&euro;<%= number_with_precision(search.total_price, precision: 2) %></span>
+                  <% else %>
+                    <span class="text-sm text-gray-400">-</span>
+                  <% end %>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <% if search.priced? %>
+                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Priced</span>
+                  <% elsif search.pending? %>
+                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">Pending</span>
+                  <% else %>
+                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">Error</span>
+                  <% end %>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
+                  <%= button_to tickets_ryanair_refresh_price_path(search.id), method: :post, class: "inline-flex items-center px-3 py-1 border border-transparent text-sm font-medium rounded-md text-indigo-700 bg-indigo-100 hover:bg-indigo-200" do %>
+                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                    </svg>
+                    Refresh
+                  <% end %>
+                  <%= button_to tickets_ryanair_delete_path(search.id), method: :delete, data: { turbo_confirm: "Are you sure you want to delete this flight search?" }, class: "inline-flex items-center px-3 py-1 border border-transparent text-sm font-medium rounded-md text-red-700 bg-red-100 hover:bg-red-200" do %>
+                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                    </svg>
+                    Delete
+                  <% end %>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    <% else %>
+      <div class="px-6 py-8 text-center text-gray-500">
+        <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+        </svg>
+        <h3 class="mt-2 text-sm font-medium text-gray-900">No flight searches</h3>
+        <p class="mt-1 text-sm text-gray-500">Get started by searching for a flight above.</p>
+      </div>
+    <% end %>
+  </div>
+
+  <% if @destinations.empty? %>
+    <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4">
+      <div class="flex">
+        <div class="flex-shrink-0">
+          <svg class="h-5 w-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+          </svg>
+        </div>
+        <div class="ml-3">
+          <p class="text-sm text-yellow-700">
+            No destinations available. Please run <code class="bg-yellow-100 px-1 rounded">bin/rails ryanair:sync_routes</code> to fetch destinations.
+          </p>
+        </div>
+      </div>
+    </div>
+  <% end %>
+</div>
