@@ -1,6 +1,7 @@
 class RyanairFlightSearch < ApplicationRecord
   belongs_to :user
   belongs_to :ryanair_destination
+  has_many :price_histories, class_name: "RyanairPriceHistory", dependent: :destroy
 
   validates :date_out, presence: true
   validates :date_in, presence: true
@@ -45,6 +46,26 @@ class RyanairFlightSearch < ApplicationRecord
     return nil unless departure_time_in && arrival_time_in
     duration_in_minutes = ((arrival_time_in - departure_time_in) / 60).to_i
     format_duration(duration_in_minutes)
+  end
+
+  def record_price_if_changed(new_price_out, new_price_in, new_total_price)
+    last_history = price_histories.order(recorded_at: :desc).first
+
+    # Record if this is the first price or if total price changed
+    if last_history.nil? || last_history.total_price != new_total_price
+      price_histories.create!(
+        price_out: new_price_out,
+        price_in: new_price_in,
+        total_price: new_total_price,
+        recorded_at: Time.current
+      )
+    end
+  end
+
+  def price_history_for_chart
+    price_histories.chronological.pluck(:recorded_at, :total_price).map do |recorded_at, price|
+      { x: recorded_at.to_i * 1000, y: price.to_f }
+    end
   end
 
   private

@@ -76,6 +76,8 @@ module Ryanair
       inbound_data = extract_best_fare(data, "inbound")
 
       if outbound_data && inbound_data
+        new_total_price = outbound_data[:price] + inbound_data[:price]
+
         @flight_search.update!(
           price_out: outbound_data[:price],
           price_in: inbound_data[:price],
@@ -87,6 +89,9 @@ module Ryanair
           priced_at: Time.current,
           api_response: data.to_json
         )
+
+        # Record price history if price changed
+        @flight_search.record_price_if_changed(outbound_data[:price], inbound_data[:price], new_total_price)
 
         Rails.logger.info "[Ryanair::PriceFetchService] Prices saved: OUT=#{outbound_data[:price]}, IN=#{inbound_data[:price]}, TOTAL=#{@flight_search.total_price}"
 

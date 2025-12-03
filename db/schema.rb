@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_12_03_171142) do
+ActiveRecord::Schema[8.0].define(version: 2025_12_03_183923) do
   create_table "ryanair_destinations", force: :cascade do |t|
     t.string "code", null: false
     t.string "name", null: false
@@ -52,6 +52,18 @@ ActiveRecord::Schema[8.0].define(version: 2025_12_03_171142) do
     t.index ["user_id"], name: "index_ryanair_flight_searches_on_user_id"
   end
 
+  create_table "ryanair_price_histories", force: :cascade do |t|
+    t.integer "ryanair_flight_search_id", null: false
+    t.decimal "price_out", precision: 10, scale: 2
+    t.decimal "price_in", precision: 10, scale: 2
+    t.decimal "total_price", precision: 10, scale: 2
+    t.datetime "recorded_at", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["ryanair_flight_search_id", "recorded_at"], name: "idx_price_history_search_recorded"
+    t.index ["ryanair_flight_search_id"], name: "index_ryanair_price_histories_on_ryanair_flight_search_id"
+  end
+
   create_table "users", force: :cascade do |t|
     t.string "email", null: false
     t.datetime "created_at", null: false
@@ -61,4 +73,5 @@ ActiveRecord::Schema[8.0].define(version: 2025_12_03_171142) do
 
   add_foreign_key "ryanair_flight_searches", "ryanair_destinations"
   add_foreign_key "ryanair_flight_searches", "users"
+  add_foreign_key "ryanair_price_histories", "ryanair_flight_searches"
 end
