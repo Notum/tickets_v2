@@ -1,0 +1,52 @@
+<div class="card bg-base-100 shadow-xl">
+  <div class="card-body">
+    <h1 class="card-title text-2xl">Profile Settings</h1>
+
+    <div class="divider"></div>
+
+    <div class="mb-6">
+      <h2 class="text-lg font-semibold mb-2">Account Information</h2>
+      <div class="bg-base-200 rounded-lg p-4">
+        <p class="text-base-content/70">Email</p>
+        <p class="font-medium"><%= @user.email %></p>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <h2 class="text-lg font-semibold mb-4">Notification Settings</h2>
+
+    <%= form_with model: @user, url: profile_path, method: :patch, class: "space-y-4" do |f| %>
+      <% if @user.errors.any? %>
+        <div class="alert alert-error">
+          <ul>
+            <% @user.errors.full_messages.each do |message| %>
+              <li><%= message %></li>
+            <% end %>
+          </ul>
+        </div>
+      <% end %>
+
+      <div class="form-control w-full max-w-xs">
+        <%= f.label :price_notification_threshold, class: "label" do %>
+          <span class="label-text">Price Drop Notification Threshold (EUR)</span>
+        <% end %>
+        <div class="join">
+          <%= f.number_field :price_notification_threshold,
+              step: 0.01,
+              min: 0,
+              class: "input input-bordered join-item w-full max-w-xs",
+              placeholder: "5.00" %>
+          <span class="btn btn-neutral join-item no-animation pointer-events-none">EUR</span>
+        </div>
+        <label class="label">
+          <span class="label-text-alt text-base-content/60">You will receive email notifications when a flight price drops by at least this amount.</span>
+        </label>
+      </div>
+
+      <div class="form-control mt-6">
+        <%= f.submit "Save Settings", class: "btn btn-primary" %>
+      </div>
+    <% end %>
+  </div>
+</div>

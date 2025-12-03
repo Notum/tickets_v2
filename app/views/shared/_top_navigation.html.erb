@@ -42,7 +42,9 @@
     </div>
 
     <div class="flex items-center gap-2">
-      <span class="text-sm hidden sm:inline"><%= current_user.email %></span>
+      <%= link_to profile_path, class: "text-sm hidden sm:inline hover:underline" do %>
+        <%= current_user.email %>
+      <% end %>
       <%= button_to "Logout", logout_path, method: :delete, class: "btn btn-primary btn-sm" %>
     </div>
   </div>

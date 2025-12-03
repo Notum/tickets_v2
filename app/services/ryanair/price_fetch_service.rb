@@ -77,6 +77,7 @@ module Ryanair
 
       if outbound_data && inbound_data
         new_total_price = outbound_data[:price] + inbound_data[:price]
+        previous_total_price = @flight_search.total_price
 
         @flight_search.update!(
           price_out: outbound_data[:price],
@@ -95,7 +96,25 @@ module Ryanair
 
         Rails.logger.info "[Ryanair::PriceFetchService] Prices saved: OUT=#{outbound_data[:price]}, IN=#{inbound_data[:price]}, TOTAL=#{@flight_search.total_price}"
 
-        { success: true, price_out: outbound_data[:price], price_in: inbound_data[:price], total: @flight_search.total_price }
+        result = { success: true, price_out: outbound_data[:price], price_in: inbound_data[:price], total: @flight_search.total_price }
+
+        # Check for price drop
+        if previous_total_price.present? && new_total_price < previous_total_price
+          price_drop = previous_total_price - new_total_price
+          result[:price_drop] = {
+            flight_search_id: @flight_search.id,
+            destination_name: @flight_search.ryanair_destination.name,
+            destination_code: @flight_search.ryanair_destination.code,
+            date_out: @flight_search.date_out,
+            date_in: @flight_search.date_in,
+            previous_price: previous_total_price,
+            current_price: new_total_price,
+            savings: price_drop
+          }
+          Rails.logger.info "[Ryanair::PriceFetchService] Price dropped by #{price_drop} EUR!"
+        end
+
+        result
       else
         update_with_error("Could not extract prices from response")
       end

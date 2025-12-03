@@ -5,6 +5,10 @@ Rails.application.routes.draw do
   post "/login", to: "sessions#create"
   delete "/logout", to: "sessions#destroy"
 
+  # Profile
+  get "/profile", to: "profiles#show", as: :profile
+  patch "/profile", to: "profiles#update"
+
   # Tickets
   scope :tickets, as: :tickets do
     get :bode, to: "tickets#bode"

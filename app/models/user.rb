@@ -4,6 +4,8 @@ class User < ApplicationRecord
   validates :email, presence: true,
                     uniqueness: { case_sensitive: false },
                     format: { with: URI::MailTo::EMAIL_REGEXP }
+  validates :price_notification_threshold, presence: true,
+                                           numericality: { greater_than_or_equal_to: 0 }
 
   before_save :downcase_email
 

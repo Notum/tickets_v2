@@ -1,2 +1,3 @@
 web: bin/rails server
 css: bin/rails tailwindcss:watch 2>&1 | grep -v -E "(watchman: not found|Unknown at rule: @property)"
+jobs: bin/jobs

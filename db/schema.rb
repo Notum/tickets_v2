@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_12_03_183923) do
+ActiveRecord::Schema[8.0].define(version: 2025_12_03_194030) do
   create_table "ryanair_destinations", force: :cascade do |t|
     t.string "code", null: false
     t.string "name", null: false
@@ -68,6 +68,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_12_03_183923) do
     t.string "email", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.decimal "price_notification_threshold", precision: 10, scale: 2, default: "5.0", null: false
     t.index ["email"], name: "index_users_on_email", unique: true
   end
 
