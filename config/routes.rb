@@ -5,15 +5,6 @@ Rails.application.routes.draw do
   post "/login", to: "sessions#create"
   delete "/logout", to: "sessions#destroy"
 
-  # Dashboards
-  scope :dashboards, as: :dashboards do
-    get :bode, to: "dashboards#bode"
-    get :ryanair, to: "dashboards#ryanair"
-    get :airbaltic, to: "dashboards#airbaltic"
-    get :norwegian, to: "dashboards#norwegian"
-    get :salidzini, to: "dashboards#salidzini"
-  end
-
   # Tickets
   scope :tickets, as: :tickets do
     get :bode, to: "tickets#bode"
