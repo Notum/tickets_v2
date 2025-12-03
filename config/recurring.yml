@@ -7,9 +7,20 @@ sync_ryanair_routes:
   queue: default
   schedule: every hour
 
+# Refresh all Ryanair flight prices every hour
+refresh_ryanair_prices:
+  class: RefreshAllRyanairPricesJob
+  queue: default
+  schedule: every hour
+
 production:
   sync_ryanair_routes:
     class: SyncRyanairRoutesJob
+    queue: default
+    schedule: every hour
+
+  refresh_ryanair_prices:
+    class: RefreshAllRyanairPricesJob
     queue: default
     schedule: every hour
 

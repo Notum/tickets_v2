@@ -7,7 +7,7 @@
       <h2 class="card-title">Search for Flights from Riga (RIX)</h2>
 
       <%= form_with url: tickets_ryanair_path, method: :post do |f| %>
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mt-4">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mt-4 items-end">
           <!-- Destination -->
           <div class="form-control">
             <label class="label" for="destination_code">
@@ -51,22 +51,17 @@
           </div>
 
           <!-- Submit Button -->
-          <div class="form-control justify-end">
-            <label class="label invisible">
-              <span class="label-text">&nbsp;</span>
+          <div class="form-control">
+            <label class="label">
+              <span class="label-text text-base-content/70" data-ryanair-search-target="tripDuration">&nbsp;</span>
             </label>
             <button type="submit"
-                    class="btn btn-primary"
+                    class="btn btn-primary w-full"
                     data-ryanair-search-target="submitButton"
                     disabled>
               Save Flight Search
             </button>
           </div>
-        </div>
-
-        <!-- Trip Duration -->
-        <div class="mt-4">
-          <span class="text-sm text-base-content/70" data-ryanair-search-target="tripDuration"></span>
         </div>
 
         <!-- Loading Indicator -->
@@ -86,36 +81,60 @@
       <% if @saved_searches.any? %>
         <div class="divide-y divide-base-300">
           <% @saved_searches.each do |search| %>
-            <div class="py-4 flex items-center justify-between">
-              <div class="flex-1">
-                <p class="font-medium">
-                  RIX <span class="mx-2">→</span> <%= search.ryanair_destination.display_name %> (<%= search.ryanair_destination.code %>)
-                </p>
-                <p class="text-sm text-base-content/70">
-                  <%= search.date_out.strftime("%b %d") %><% if search.time_out.present? %> at <%= search.time_out %><% end %>
-                  <span class="mx-1">-</span>
-                  <%= search.date_in.strftime("%b %d, %Y") %><% if search.time_in.present? %> at <%= search.time_in %><% end %>
-                  (<%= search.trip_duration %> days)
-                </p>
-                <% if search.priced_at.present? %>
-                  <p class="text-xs text-base-content/50 mt-1">Last synced: <%= time_ago_in_words(search.priced_at) %> ago</p>
-                <% elsif search.pending? %>
-                  <span class="badge badge-warning badge-sm mt-1">Pending sync</span>
-                <% elsif search.error? %>
-                  <span class="badge badge-error badge-sm mt-1">Sync error</span>
+            <div class="py-3 flex items-center justify-between gap-4">
+              <!-- Route -->
+              <div class="font-medium whitespace-nowrap">
+                RIX <span class="text-base-content/50">→</span> <%= search.ryanair_destination.display_name %> <span class="text-base-content/50">→</span> RIX
+                <span class="text-xs text-base-content/50 font-normal ml-1">(<%= search.trip_duration %>d)</span>
+              </div>
+
+              <!-- Flight Times -->
+              <% if search.has_flight_times? %>
+                <div class="flex items-center gap-3">
+                  <!-- Outbound -->
+                  <div class="text-center">
+                    <div class="text-xs text-base-content/70"><%= search.departure_time_out.strftime("%d/%m/%Y") %></div>
+                    <div class="flex items-center gap-1 text-sm font-medium">
+                      <span><%= search.departure_time_out.strftime("%H:%M") %></span>
+                      <span class="text-base-content/50">→</span>
+                      <span><%= search.arrival_time_out.strftime("%H:%M") %></span>
+                    </div>
+                  </div>
+
+                  <!-- Exchange Arrow -->
+                  <div class="text-base-content/30">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path>
+                    </svg>
+                  </div>
+
+                  <!-- Inbound -->
+                  <div class="text-center">
+                    <div class="text-xs text-base-content/70"><%= search.departure_time_in.strftime("%d/%m/%Y") %></div>
+                    <div class="flex items-center gap-1 text-sm font-medium">
+                      <span><%= search.departure_time_in.strftime("%H:%M") %></span>
+                      <span class="text-base-content/50">→</span>
+                      <span><%= search.arrival_time_in.strftime("%H:%M") %></span>
+                    </div>
+                  </div>
+                </div>
+              <% else %>
+                <div class="text-sm text-base-content/70">
+                  <%= search.date_out.strftime("%d/%m/%Y") %> - <%= search.date_in.strftime("%d/%m/%Y") %>
+                </div>
+              <% end %>
+
+              <!-- Price -->
+              <div class="text-left shrink-0 w-24">
+                <% if search.total_price %>
+                  <p class="text-lg font-semibold text-success">&euro;<%= number_with_precision(search.total_price, precision: 2) %></p>
+                <% else %>
+                  <p class="text-lg font-semibold text-base-content/30">-</p>
                 <% end %>
               </div>
-              <div class="flex items-center gap-4">
-                <div class="text-right">
-                  <% if search.total_price %>
-                    <p class="text-lg font-semibold text-success">&euro;<%= number_with_precision(search.total_price, precision: 2) %></p>
-                    <p class="text-xs text-base-content/50">
-                      &euro;<%= number_with_precision(search.price_out, precision: 2) %> + &euro;<%= number_with_precision(search.price_in, precision: 2) %>
-                    </p>
-                  <% else %>
-                    <p class="text-lg font-semibold text-base-content/30">-</p>
-                  <% end %>
-                </div>
+
+              <!-- Actions & Sync -->
+              <div class="flex flex-col items-center shrink-0">
                 <div class="flex items-center gap-1">
                   <%= button_to tickets_ryanair_refresh_price_path(search.id), method: :post, class: "btn btn-ghost btn-sm btn-square", title: "Refresh price" do %>
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -128,6 +147,13 @@
                     </svg>
                   <% end %>
                 </div>
+                <% if search.priced_at.present? %>
+                  <span class="text-xs text-base-content/50"><%= time_ago_in_words(search.priced_at) %> ago</span>
+                <% elsif search.pending? %>
+                  <span class="badge badge-warning badge-xs">Pending</span>
+                <% elsif search.error? %>
+                  <span class="badge badge-error badge-xs">Error</span>
+                <% end %>
               </div>
             </div>
           <% end %>

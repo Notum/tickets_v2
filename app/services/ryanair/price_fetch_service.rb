@@ -72,31 +72,36 @@ module Ryanair
     end
 
     def parse_and_save_prices(data)
-      price_out = extract_lowest_price(data, "outbound")
-      price_in = extract_lowest_price(data, "inbound")
+      outbound_data = extract_best_fare(data, "outbound")
+      inbound_data = extract_best_fare(data, "inbound")
 
-      if price_out && price_in
+      if outbound_data && inbound_data
         @flight_search.update!(
-          price_out: price_out,
-          price_in: price_in,
+          price_out: outbound_data[:price],
+          price_in: inbound_data[:price],
+          departure_time_out: outbound_data[:departure_time],
+          arrival_time_out: outbound_data[:arrival_time],
+          departure_time_in: inbound_data[:departure_time],
+          arrival_time_in: inbound_data[:arrival_time],
           status: "priced",
           priced_at: Time.current,
           api_response: data.to_json
         )
 
-        Rails.logger.info "[Ryanair::PriceFetchService] Prices saved: OUT=#{price_out}, IN=#{price_in}, TOTAL=#{@flight_search.total_price}"
+        Rails.logger.info "[Ryanair::PriceFetchService] Prices saved: OUT=#{outbound_data[:price]}, IN=#{inbound_data[:price]}, TOTAL=#{@flight_search.total_price}"
 
-        { success: true, price_out: price_out, price_in: price_in, total: @flight_search.total_price }
+        { success: true, price_out: outbound_data[:price], price_in: inbound_data[:price], total: @flight_search.total_price }
       else
         update_with_error("Could not extract prices from response")
       end
     end
 
-    def extract_lowest_price(data, direction)
+    def extract_best_fare(data, direction)
       # Fare finder API returns: { "fares": [{ "outbound": {...}, "inbound": {...}, "summary": {...} }] }
       fares = data.dig("fares")
       return nil unless fares.is_a?(Array) && fares.any?
 
+      best_fare = nil
       lowest_price = nil
 
       fares.each do |fare|
@@ -107,10 +112,26 @@ module Ryanair
         next unless price_value
 
         price = price_value.to_f
-        lowest_price = price if lowest_price.nil? || price < lowest_price
+        if lowest_price.nil? || price < lowest_price
+          lowest_price = price
+          best_fare = leg
+        end
       end
 
-      lowest_price
+      return nil unless best_fare
+
+      {
+        price: lowest_price,
+        departure_time: parse_datetime(best_fare.dig("departureDate")),
+        arrival_time: parse_datetime(best_fare.dig("arrivalDate"))
+      }
+    end
+
+    def parse_datetime(datetime_string)
+      return nil unless datetime_string.present?
+      Time.parse(datetime_string)
+    rescue ArgumentError
+      nil
     end
 
     def update_with_error(message)

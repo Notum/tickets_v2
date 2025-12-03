@@ -28,22 +28,22 @@
     <% end %>
 
     <% if flash[:notice] %>
-      <div class="toast toast-top toast-end z-50">
-        <div class="alert alert-success">
+      <div class="toast toast-top toast-end z-50" data-controller="auto-dismiss">
+        <div class="alert alert-success bg-opacity-90">
           <span><%= flash[:notice] %></span>
         </div>
       </div>
     <% end %>
 
     <% if flash[:alert] && !controller_name.in?(%w[sessions]) %>
-      <div class="toast toast-top toast-end z-50">
-        <div class="alert alert-error">
+      <div class="toast toast-top toast-end z-50" data-controller="auto-dismiss">
+        <div class="alert alert-error bg-opacity-90">
           <span><%= flash[:alert] %></span>
         </div>
       </div>
     <% end %>
 
-    <main class="<%= logged_in? ? 'container mx-auto px-4 py-8' : '' %>">
+    <main class="<%= logged_in? ? 'container mx-auto px-4 py-8 max-w-7xl' : '' %>">
       <%= yield %>
     </main>
   </body>

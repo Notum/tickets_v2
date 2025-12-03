@@ -3,6 +3,7 @@ class ApplicationController < ActionController::Base
   allow_browser versions: :modern
 
   before_action :authenticate_user!
+  before_action :save_last_visited_path
   helper_method :current_user, :logged_in?
 
   private
@@ -20,5 +21,12 @@ class ApplicationController < ActionController::Base
       flash[:alert] = "Please log in to continue."
       redirect_to login_path
     end
+  end
+
+  def save_last_visited_path
+    return unless request.get? && logged_in? && !request.xhr?
+    return if controller_name == "sessions"
+
+    cookies[:last_visited_path] = request.path
   end
 end

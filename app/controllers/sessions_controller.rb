@@ -2,7 +2,7 @@ class SessionsController < ApplicationController
   skip_before_action :authenticate_user!, only: [ :new, :create ]
 
   def new
-    redirect_to dashboards_ryanair_path if logged_in?
+    redirect_to default_redirect_path if logged_in?
   end
 
   def create
@@ -10,7 +10,7 @@ class SessionsController < ApplicationController
 
     if user
       session[:user_id] = user.id
-      redirect_to dashboards_ryanair_path, notice: "Welcome back!"
+      redirect_to default_redirect_path, notice: "Welcome back!"
     else
       flash.now[:alert] = "User not found. Please contact administrator."
       render :new, status: :unprocessable_entity
@@ -19,6 +19,13 @@ class SessionsController < ApplicationController
 
   def destroy
     session[:user_id] = nil
+    cookies.delete(:last_visited_path)
     redirect_to login_path, notice: "You have been logged out."
+  end
+
+  private
+
+  def default_redirect_path
+    cookies[:last_visited_path] || tickets_ryanair_path
   end
 end
