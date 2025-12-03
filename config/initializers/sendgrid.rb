@@ -8,32 +8,23 @@ class SendGridDelivery
   def deliver!(mail)
     sendgrid = SendGrid::API.new(api_key: Rails.application.credentials.dig(:sendgrid, :api_key))
 
-    from = SendGrid::Email.new(
-      email: mail.from.first,
-      name: mail[:from].display_names&.first || mail.from.first
-    )
+    sg_mail = SendGrid::Mail.new
+    sg_mail.from = SendGrid::Email.new(email: extract_email(mail.from.first), name: "Tickets@Petrucho.me")
+    sg_mail.subject = mail.subject
 
     personalization = SendGrid::Personalization.new
     mail.to.each do |to_email|
-      personalization.add_to(SendGrid::Email.new(email: to_email))
+      personalization.add_to(SendGrid::Email.new(email: extract_email(to_email)))
     end
-
-    sg_mail = SendGrid::Mail.new
-    sg_mail.from = from
-    sg_mail.subject = mail.subject
     sg_mail.add_personalization(personalization)
 
-    if mail.reply_to.present?
-      sg_mail.reply_to = SendGrid::Email.new(email: mail.reply_to.first)
+    if mail.text_part
+      sg_mail.add_content(SendGrid::Content.new(type: "text/plain", value: mail.text_part.body.to_s))
     end
 
     if mail.html_part
       sg_mail.add_content(SendGrid::Content.new(type: "text/html", value: mail.html_part.body.to_s))
-    end
-
-    if mail.text_part
-      sg_mail.add_content(SendGrid::Content.new(type: "text/plain", value: mail.text_part.body.to_s))
-    elsif mail.body.to_s.present? && !mail.html_part
+    elsif mail.body.to_s.present?
       sg_mail.add_content(SendGrid::Content.new(type: "text/plain", value: mail.body.to_s))
     end
 
@@ -46,6 +37,12 @@ class SendGridDelivery
 
     Rails.logger.info "[SendGrid] Email sent successfully to #{mail.to.join(', ')}"
     response
+  end
+
+  private
+
+  def extract_email(address)
+    address.to_s.gsub(/.*<(.+)>.*/, '\1').strip
   end
 end
 
