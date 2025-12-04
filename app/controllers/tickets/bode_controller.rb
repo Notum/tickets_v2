@@ -29,10 +29,7 @@ module Tickets
       )
 
       if @flight_search.save
-        # Queue price fetch job
-        FetchBodePriceJob.perform_later(@flight_search.id)
-
-        flash[:notice] = "Flight search saved! Prices will be fetched in the background."
+        flash[:notice] = "Flight search saved! Prices will be updated on the next scheduled refresh."
         redirect_to tickets_bode_path
       else
         flash[:alert] = @flight_search.errors.full_messages.join(", ")
@@ -44,12 +41,22 @@ module Tickets
       @flight_search = current_user.bode_flight_searches.find_by(id: params[:id])
 
       if @flight_search&.destroy
-        flash[:notice] = "Flight search deleted."
+        respond_to do |format|
+          format.turbo_stream { render turbo_stream: turbo_stream.remove(@flight_search) }
+          format.html do
+            flash[:notice] = "Flight search deleted."
+            redirect_to tickets_bode_path
+          end
+        end
       else
-        flash[:alert] = "Could not delete flight search."
+        respond_to do |format|
+          format.turbo_stream { render turbo_stream: turbo_stream.prepend("flash", partial: "shared/flash", locals: { type: "alert", message: "Could not delete flight search." }) }
+          format.html do
+            flash[:alert] = "Could not delete flight search."
+            redirect_to tickets_bode_path
+          end
+        end
       end
-
-      redirect_to tickets_bode_path
     end
 
     private

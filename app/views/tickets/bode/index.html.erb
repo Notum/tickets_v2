@@ -1,4 +1,4 @@
-<div class="space-y-6">
+<div class="space-y-6" data-controller="delete-confirm">
   <h1 class="text-2xl font-bold">Bode.lv Charter Flights</h1>
 
   <!-- Search Form Card -->
@@ -67,12 +67,17 @@
   <!-- Saved Searches Card -->
   <div class="card bg-base-100 shadow-xl">
     <div class="card-body">
-      <h2 class="card-title">Your Saved Flight Searches</h2>
+      <div class="flex items-center justify-between">
+        <h2 class="card-title">Your Saved Flight Searches</h2>
+        <% if @saved_searches.any? && @saved_searches.first.priced_at.present? %>
+          <span class="text-xs text-base-content/50">Updated <%= time_ago_in_words(@saved_searches.maximum(:priced_at)) %> ago</span>
+        <% end %>
+      </div>
 
       <% if @saved_searches.any? %>
-        <div class="divide-y divide-base-300">
+        <div class="divide-y divide-base-300" id="bode-searches">
           <% @saved_searches.each do |search| %>
-            <div class="py-3 flex items-center gap-4">
+            <div class="py-3 flex items-center gap-4" id="<%= dom_id(search) %>">
               <!-- Route -->
               <div class="font-medium whitespace-nowrap w-64 shrink-0">
                 <%= search.bode_destination.display_name %>
@@ -107,28 +112,29 @@
                 <% end %>
               </div>
 
-              <!-- Actions & Sync -->
-              <div class="flex flex-col items-center shrink-0">
-                <div class="flex items-center gap-1">
-                  <% if search.order_url.present? %>
-                    <a href="<%= search.order_url %>" target="_blank" class="btn btn-ghost btn-sm btn-square text-info" title="Go to Buy">
-                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
-                      </svg>
-                    </a>
-                  <% end %>
-                  <%= button_to tickets_bode_delete_path(search.id), method: :delete, data: { turbo_confirm: "Are you sure you want to delete this flight search?" }, class: "btn btn-ghost btn-sm btn-square text-error", title: "Delete" do %>
+              <!-- Actions -->
+              <div class="flex items-center gap-1 shrink-0">
+                <% if search.order_url.present? %>
+                  <a href="<%= search.order_url %>" target="_blank" class="btn btn-ghost btn-sm btn-square text-info" title="Go to Buy">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
                     </svg>
-                  <% end %>
-                </div>
-                <% if search.priced_at.present? %>
-                  <span class="text-xs text-base-content/50"><%= time_ago_in_words(search.priced_at) %> ago</span>
-                <% elsif search.pending? %>
-                  <span class="badge badge-warning badge-xs">Pending</span>
+                  </a>
+                <% end %>
+                <button type="button"
+                        class="btn btn-ghost btn-sm btn-square text-error"
+                        title="Delete"
+                        data-action="click->delete-confirm#open"
+                        data-delete-confirm-url="<%= tickets_bode_delete_path(search.id) %>"
+                        data-delete-confirm-message="Are you sure you want to delete the flight search to <%= search.bode_destination.display_name %>?">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                  </svg>
+                </button>
+                <% if search.pending? %>
+                  <span class="badge badge-warning badge-xs ml-1">Pending</span>
                 <% elsif search.error? %>
-                  <span class="badge badge-error badge-xs">Error</span>
+                  <span class="badge badge-error badge-xs ml-1">Error</span>
                 <% end %>
               </div>
             </div>
@@ -154,4 +160,19 @@
       <span>No destinations available. Please run <kbd class="kbd kbd-sm">bin/rails bode:sync_destinations</kbd> to fetch destinations.</span>
     </div>
   <% end %>
+
+  <!-- Delete Confirmation Modal -->
+  <dialog class="modal" data-delete-confirm-target="modal">
+    <div class="modal-box">
+      <h3 class="text-lg font-bold">Confirm Delete</h3>
+      <p class="py-4" data-delete-confirm-target="message">Are you sure you want to delete this flight search?</p>
+      <div class="modal-action">
+        <button type="button" class="btn" data-action="click->delete-confirm#close">Cancel</button>
+        <button type="button" class="btn btn-error" data-action="click->delete-confirm#confirm">Delete</button>
+      </div>
+    </div>
+    <form method="dialog" class="modal-backdrop">
+      <button>close</button>
+    </form>
+  </dialog>
 </div>

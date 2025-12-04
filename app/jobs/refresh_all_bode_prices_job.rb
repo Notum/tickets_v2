@@ -2,7 +2,7 @@ class RefreshAllBodePricesJob < ApplicationJob
   queue_as :default
 
   def perform
-    flight_searches = BodeFlightSearch.where(status: "priced").or(BodeFlightSearch.where(status: "error"))
+    flight_searches = BodeFlightSearch.where(status: %w[pending priced error])
 
     Rails.logger.info "[RefreshAllBodePricesJob] Refreshing prices for #{flight_searches.count} flight searches"
 
