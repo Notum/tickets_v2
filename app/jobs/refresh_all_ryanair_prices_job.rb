@@ -37,7 +37,7 @@ class RefreshAllRyanairPricesJob < ApplicationJob
 
       user = User.find(user_id)
       Rails.logger.info "[RefreshAllRyanairPricesJob] Sending price drop notification to #{user.email} with #{price_drops.count} drops"
-      PriceDropMailer.price_dropped(user, price_drops).deliver_later
+      RyanairPriceDropMailer.price_dropped(user, price_drops).deliver_later
     end
 
     Rails.logger.info "[RefreshAllRyanairPricesJob] Completed price refresh. Sent notifications to #{price_drops_by_user.keys.count} users"

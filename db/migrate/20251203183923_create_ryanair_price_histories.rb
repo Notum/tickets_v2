@@ -10,6 +10,6 @@ class CreateRyanairPriceHistories < ActiveRecord::Migration[8.0]
       t.timestamps
     end
 
-    add_index :ryanair_price_histories, [:ryanair_flight_search_id, :recorded_at], name: "idx_price_history_search_recorded"
+    add_index :ryanair_price_histories, [ :ryanair_flight_search_id, :recorded_at ], name: "idx_price_history_search_recorded"
   end
 end

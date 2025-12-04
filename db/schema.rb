@@ -10,7 +10,46 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_12_03_194030) do
+ActiveRecord::Schema[8.0].define(version: 2025_12_04_080022) do
+  create_table "bode_destinations", force: :cascade do |t|
+    t.string "name", null: false
+    t.string "charter_path", null: false
+    t.datetime "last_synced_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["charter_path"], name: "index_bode_destinations_on_charter_path", unique: true
+  end
+
+  create_table "bode_flight_searches", force: :cascade do |t|
+    t.integer "user_id", null: false
+    t.integer "bode_destination_id", null: false
+    t.date "date_out", null: false
+    t.date "date_in", null: false
+    t.integer "nights"
+    t.decimal "price", precision: 10, scale: 2
+    t.string "airline"
+    t.string "order_url"
+    t.integer "free_seats"
+    t.string "status", default: "pending"
+    t.text "api_response"
+    t.datetime "priced_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["bode_destination_id"], name: "index_bode_flight_searches_on_bode_destination_id"
+    t.index ["user_id", "bode_destination_id", "date_out", "date_in"], name: "idx_bode_searches_unique", unique: true
+    t.index ["user_id"], name: "index_bode_flight_searches_on_user_id"
+  end
+
+  create_table "bode_price_histories", force: :cascade do |t|
+    t.integer "bode_flight_search_id", null: false
+    t.decimal "price", precision: 10, scale: 2
+    t.datetime "recorded_at", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["bode_flight_search_id", "recorded_at"], name: "idx_bode_price_history_search_recorded"
+    t.index ["bode_flight_search_id"], name: "index_bode_price_histories_on_bode_flight_search_id"
+  end
+
   create_table "ryanair_destinations", force: :cascade do |t|
     t.string "code", null: false
     t.string "name", null: false
@@ -72,6 +111,9 @@ ActiveRecord::Schema[8.0].define(version: 2025_12_03_194030) do
     t.index ["email"], name: "index_users_on_email", unique: true
   end
 
+  add_foreign_key "bode_flight_searches", "bode_destinations"
+  add_foreign_key "bode_flight_searches", "users"
+  add_foreign_key "bode_price_histories", "bode_flight_searches"
   add_foreign_key "ryanair_flight_searches", "ryanair_destinations"
   add_foreign_key "ryanair_flight_searches", "users"
   add_foreign_key "ryanair_price_histories", "ryanair_flight_searches"

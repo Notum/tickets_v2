@@ -11,21 +11,32 @@ Rails.application.routes.draw do
 
   # Tickets
   scope :tickets, as: :tickets do
-    get :bode, to: "tickets#bode"
+    # Bode.lv Charter Flights (prices refreshed hourly by system)
+    get :bode, to: "tickets/bode#index"
+    post :bode, to: "tickets/bode#create"
+    delete "bode/:id", to: "tickets/bode#destroy", as: :bode_delete
+
+    # Ryanair
     get :ryanair, to: "tickets/ryanair#index"
     post :ryanair, to: "tickets/ryanair#create"
     delete "ryanair/:id", to: "tickets/ryanair#destroy", as: :ryanair_delete
     post "ryanair/:id/refresh_price", to: "tickets/ryanair#refresh_price", as: :ryanair_refresh_price
+
     get :airbaltic, to: "tickets#airbaltic"
     get :norwegian, to: "tickets#norwegian"
   end
 
-  # Ryanair API endpoints (AJAX)
+  # API endpoints (AJAX)
   namespace :api do
+    # Ryanair
     get "ryanair/destinations", to: "ryanair#destinations"
     get "ryanair/dates_out", to: "ryanair#dates_out"
     get "ryanair/dates_in", to: "ryanair#dates_in"
     post "ryanair/flight_searches", to: "ryanair#flight_searches"
+
+    # Bode.lv
+    get "bode/destinations", to: "bode#destinations"
+    get "bode/flights", to: "bode#flights"
   end
 
   # Reveal health status on /up that returns 200 if the app boots with no exceptions, otherwise 500.

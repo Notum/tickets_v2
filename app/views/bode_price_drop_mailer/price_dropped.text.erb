@@ -1,0 +1,22 @@
+BODE.LV CHARTER PRICE DROP ALERT
+================================
+
+Hi <%= @user.email %>,
+
+Great news! The following charter flight prices have dropped:
+
+<% @price_drops.each do |drop| %>
+<%= drop[:destination_name] %>
+Dates: <%= drop[:date_out].strftime("%d.%m.%Y") %> - <%= drop[:date_in].strftime("%d.%m.%Y") %>
+Previous price: <%= drop[:previous_price].to_i %>€
+New price: <%= drop[:current_price].to_i %>€
+You save: <%= drop[:savings].to_i %>€
+<% if drop[:order_url].present? %>
+Book now: <%= drop[:order_url] %>
+<% end %>
+
+<% end %>
+---
+You receive alerts when prices drop by more than €<%= number_with_precision(@user.price_notification_threshold, precision: 2) %>
+
+Tickets@Petrucho.me

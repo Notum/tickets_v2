@@ -1,5 +1,5 @@
-Price Drop Alert!
-================
+RYANAIR PRICE DROP ALERT
+========================
 
 Hi <%= @user.email %>,
 
@@ -17,5 +17,4 @@ Savings: EUR <%= number_with_precision(drop[:savings], precision: 2) %>
 
 You are receiving this email because the price dropped by more than EUR <%= number_with_precision(@user.price_notification_threshold, precision: 2) %> (your notification threshold).
 
-This email was sent by Tickets@Petrucho.me
-To change your notification settings, please update your profile.
+Tickets@Petrucho.me

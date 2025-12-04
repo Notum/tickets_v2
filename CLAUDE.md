@@ -55,3 +55,5 @@ bin/jobs             # Run Solid Queue job worker
 - `app/javascript/controllers/` - Stimulus controllers
 - `app/assets/tailwind/application.css` - Tailwind entry point
 - `db/` - SQLite databases and schemas (including cache, queue, cable schemas)
+- Our app is running locally (DEV) on port 4000
+- If server restart is needed - ask user to do it. Do not try to initiate server restart/start by yourself

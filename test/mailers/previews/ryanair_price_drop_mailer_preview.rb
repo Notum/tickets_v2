@@ -1,4 +1,4 @@
-class PriceDropMailerPreview < ActionMailer::Preview
+class RyanairPriceDropMailerPreview < ActionMailer::Preview
   def price_dropped
     user = User.first || User.new(email: "test@example.com", price_notification_threshold: 5.0)
 
@@ -32,6 +32,6 @@ class PriceDropMailerPreview < ActionMailer::Preview
       }
     ]
 
-    PriceDropMailer.price_dropped(user, price_drops)
+    RyanairPriceDropMailer.price_dropped(user, price_drops)
   end
 end
