@@ -54,14 +54,14 @@ module Ryanair
       date_out = @flight_search.date_out
       date_in = @flight_search.date_in
 
-      # Add flex days (2 days before and after)
+      # Search for exact dates selected (no flex range)
       params = {
         "departureAirportIataCode" => "RIX",
         "arrivalAirportIataCode" => destination.code,
-        "outboundDepartureDateFrom" => (date_out - 2).strftime("%Y-%m-%d"),
-        "outboundDepartureDateTo" => (date_out + 2).strftime("%Y-%m-%d"),
-        "inboundDepartureDateFrom" => (date_in - 2).strftime("%Y-%m-%d"),
-        "inboundDepartureDateTo" => (date_in + 2).strftime("%Y-%m-%d"),
+        "outboundDepartureDateFrom" => date_out.strftime("%Y-%m-%d"),
+        "outboundDepartureDateTo" => date_out.strftime("%Y-%m-%d"),
+        "inboundDepartureDateFrom" => date_in.strftime("%Y-%m-%d"),
+        "inboundDepartureDateTo" => date_in.strftime("%Y-%m-%d"),
         "currency" => "EUR",
         "adultPaxCount" => 1
       }
@@ -79,7 +79,13 @@ module Ryanair
         new_total_price = outbound_data[:price] + inbound_data[:price]
         previous_total_price = @flight_search.total_price
 
+        # Update date_out and date_in to match actual flight dates from API
+        actual_date_out = outbound_data[:departure_time]&.to_date
+        actual_date_in = inbound_data[:departure_time]&.to_date
+
         @flight_search.update!(
+          date_out: actual_date_out || @flight_search.date_out,
+          date_in: actual_date_in || @flight_search.date_in,
           price_out: outbound_data[:price],
           price_in: inbound_data[:price],
           departure_time_out: outbound_data[:departure_time],
