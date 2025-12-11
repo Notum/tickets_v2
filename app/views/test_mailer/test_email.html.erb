@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+    .header { background: #4F46E5; color: white; padding: 20px; text-align: center; }
+    .content { padding: 20px; background: #f9f9f9; }
+    .footer { padding: 10px; text-align: center; font-size: 12px; color: #666; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>Test Email</h1>
+    </div>
+    <div class="content">
+      <p>This is a test email from <strong>TicketsV2</strong>.</p>
+      <p>If you received this email, your mail configuration is working correctly!</p>
+      <p><strong>Recipient:</strong> <%= @recipient %></p>
+      <p><strong>Sent at:</strong> <%= @sent_at.strftime("%Y-%m-%d %H:%M:%S %Z") %></p>
+    </div>
+    <div class="footer">
+      <p>Sent via Mailgun from TicketsV2</p>
+    </div>
+  </div>
+</body>
+</html>

@@ -40,8 +40,8 @@ Rails.application.configure do
   # Set localhost to be used by links generated in mailer templates.
   config.action_mailer.default_url_options = { host: "localhost", port: 3000 }
 
-  # Use SendGrid for email delivery
-  config.action_mailer.delivery_method = :sendgrid
+  # Use Mailgun for email delivery
+  config.action_mailer.delivery_method = :mailgun
 
   # Print deprecation notices to the Rails logger.
   config.active_support.deprecation = :log
