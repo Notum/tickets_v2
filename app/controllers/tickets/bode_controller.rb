@@ -1,7 +1,7 @@
 module Tickets
   class BodeController < ApplicationController
     def index
-      @destinations = BodeDestination.ordered
+      @destinations = BodeDestination.active.ordered
       @saved_searches = current_user.bode_flight_searches.includes(:bode_destination).recent
     end
 

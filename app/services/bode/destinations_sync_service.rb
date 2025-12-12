@@ -17,22 +17,44 @@ module Bode
 
       created = 0
       updated = 0
+      synced_ids = []
 
       destinations.each do |dest|
-        record = BodeDestination.find_or_initialize_by(charter_path: dest[:charter_path])
+        # Find by name first (to avoid duplicates by destination name)
+        # Use active: true preference to get the canonical record
+        record_by_name = BodeDestination.where(name: dest[:name]).order(active: :desc, id: :desc).first
+        record_by_path = BodeDestination.find_by(charter_path: dest[:charter_path])
 
-        if record.new_record?
-          record.assign_attributes(dest)
-          record.save!
-          created += 1
-        else
-          record.update!(dest.merge(last_synced_at: Time.current))
+        if record_by_name
+          # Destination with this name exists
+          if record_by_path && record_by_path.id != record_by_name.id
+            # Charter path exists on different record - merge flight searches and remove conflicting path
+            record_by_path.bode_flight_searches.update_all(bode_destination_id: record_by_name.id)
+            # Clear the charter_path before deactivating to avoid uniqueness conflict
+            record_by_path.update_columns(charter_path: "#{record_by_path.charter_path}_archived_#{record_by_path.id}", active: false)
+          end
+          record_by_name.update!(dest.merge(last_synced_at: Time.current, active: true))
+          synced_ids << record_by_name.id
           updated += 1
+        elsif record_by_path
+          # No name match but charter_path exists - update name
+          record_by_path.update!(dest.merge(last_synced_at: Time.current, active: true))
+          synced_ids << record_by_path.id
+          updated += 1
+        else
+          # New destination
+          record = BodeDestination.create!(dest.merge(active: true))
+          synced_ids << record.id
+          created += 1
         end
       end
 
-      Rails.logger.info "[Bode::DestinationsSyncService] Created: #{created}, Updated: #{updated}"
-      { success: true, created: created, updated: updated, total: destinations.count }
+      # Mark destinations not found in current sync as inactive
+      deactivated = BodeDestination.where.not(id: synced_ids).where(active: true).update_all(active: false)
+      Rails.logger.info "[Bode::DestinationsSyncService] Deactivated #{deactivated} destinations not found in Bode"
+
+      Rails.logger.info "[Bode::DestinationsSyncService] Created: #{created}, Updated: #{updated}, Deactivated: #{deactivated}"
+      { success: true, created: created, updated: updated, deactivated: deactivated, total: destinations.count }
     rescue StandardError => e
       Rails.logger.error "[Bode::DestinationsSyncService] Error: #{e.message}"
       Rails.logger.error e.backtrace.first(10).join("\n")

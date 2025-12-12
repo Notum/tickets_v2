@@ -4,6 +4,7 @@ class BodeDestination < ApplicationRecord
   validates :name, presence: true
   validates :charter_path, presence: true, uniqueness: true
 
+  scope :active, -> { where(active: true) }
   scope :ordered, -> { order(:name) }
 
   def display_name

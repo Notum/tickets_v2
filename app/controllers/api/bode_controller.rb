@@ -1,7 +1,7 @@
 module Api
   class BodeController < ApplicationController
     def destinations
-      destinations = BodeDestination.ordered.map do |d|
+      destinations = BodeDestination.active.ordered.map do |d|
         { id: d.id, name: d.display_name, charter_path: d.charter_path }
       end
 
