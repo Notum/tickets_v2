@@ -2,7 +2,16 @@
   <h1 class="text-2xl font-bold">Bode.lv Charter Flights</h1>
 
   <!-- Search Form Card -->
-  <div class="card bg-base-100 shadow-xl" data-controller="bode-search">
+  <%
+    # Build saved searches data for JS filtering
+    saved_searches_data = @saved_searches.group_by(&:bode_destination_id).transform_values do |searches|
+      searches.map { |s| { date_out: s.date_out.strftime("%d.%m.%Y"), date_in: s.date_in.strftime("%d.%m.%Y") } }
+    end
+  %>
+  <div class="card bg-base-100 shadow-xl"
+       data-controller="bode-search"
+       data-bode-search-saved-searches-value="<%= saved_searches_data.to_json %>"
+       data-bode-search-selected-destination-value="<%= @selected_destination_id || '' %>">
     <div class="card-body">
       <h2 class="card-title">Search for Charter Flights from Riga</h2>
 
@@ -19,7 +28,7 @@
                     data-action="change->bode-search#destinationChanged">
               <option value="">Select destination</option>
               <% @destinations.each do |destination| %>
-                <option value="<%= destination.id %>"><%= destination.display_name %></option>
+                <option value="<%= destination.id %>" <%= 'selected' if @selected_destination_id == destination.id %>><%= destination.display_name %></option>
               <% end %>
             </select>
           </div>

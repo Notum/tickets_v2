@@ -3,6 +3,7 @@ module Tickets
     def index
       @destinations = BodeDestination.active.ordered
       @saved_searches = current_user.bode_flight_searches.includes(:bode_destination).recent
+      @selected_destination_id = params[:destination_id].to_i if params[:destination_id].present?
     end
 
     def create
@@ -30,10 +31,10 @@ module Tickets
 
       if @flight_search.save
         flash[:notice] = "Flight search saved! Prices will be updated on the next scheduled refresh."
-        redirect_to tickets_bode_path
+        redirect_to tickets_bode_path(destination_id: destination.id)
       else
         flash[:alert] = @flight_search.errors.full_messages.join(", ")
-        redirect_to tickets_bode_path
+        redirect_to tickets_bode_path(destination_id: destination.id)
       end
     end
 

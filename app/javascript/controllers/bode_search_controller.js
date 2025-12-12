@@ -12,8 +12,18 @@ export default class extends Controller {
     "loadingIndicator"
   ]
 
+  static values = {
+    savedSearches: Object,
+    selectedDestination: String
+  }
+
   connect() {
     this.flights = []
+
+    // If a destination is pre-selected, load its flights
+    if (this.selectedDestinationValue) {
+      this.destinationChanged()
+    }
   }
 
   async destinationChanged() {
@@ -54,11 +64,21 @@ export default class extends Controller {
   populateFlightSelect() {
     this.flightSelectTarget.innerHTML = '<option value="">Select a flight</option>'
 
+    const destinationId = this.destinationSelectTarget.value
+    const savedForDestination = this.savedSearchesValue[destinationId] || []
+
     this.flights.forEach((flight, index) => {
-      const option = document.createElement("option")
-      option.value = index
-      option.textContent = flight.label
-      this.flightSelectTarget.appendChild(option)
+      // Skip flights that are already saved
+      const isAlreadySaved = savedForDestination.some(
+        saved => saved.date_out === flight.date_out && saved.date_in === flight.date_in
+      )
+
+      if (!isAlreadySaved) {
+        const option = document.createElement("option")
+        option.value = index
+        option.textContent = flight.label
+        this.flightSelectTarget.appendChild(option)
+      }
     })
   }
 
