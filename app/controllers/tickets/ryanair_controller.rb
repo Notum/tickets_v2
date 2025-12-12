@@ -3,6 +3,7 @@ module Tickets
     def index
       @destinations = RyanairDestination.ordered
       @saved_searches = current_user.ryanair_flight_searches.includes(:ryanair_destination).recent
+      @selected_destination_code = params[:destination_code] if params[:destination_code].present?
     end
 
     def create
@@ -24,10 +25,10 @@ module Tickets
         FetchRyanairPriceJob.perform_later(@flight_search.id)
 
         flash[:notice] = "Flight search saved! Prices will be fetched in the background."
-        redirect_to tickets_ryanair_path
+        redirect_to tickets_ryanair_path(destination_code: destination.code)
       else
         flash[:alert] = @flight_search.errors.full_messages.join(", ")
-        redirect_to tickets_ryanair_path
+        redirect_to tickets_ryanair_path(destination_code: destination.code)
       end
     end
 

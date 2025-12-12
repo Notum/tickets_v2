@@ -2,7 +2,23 @@
   <h1 class="text-2xl font-bold">Ryanair Flight Search</h1>
 
   <!-- Search Form Card -->
-  <div class="card bg-base-100 shadow-xl" data-controller="ryanair-search">
+  <%
+    # Build saved searches data for JS filtering
+    # Structure: { destination_code: { date_out: [date_in, date_in, ...] } }
+    saved_searches_data = {}
+    @saved_searches.each do |search|
+      code = search.ryanair_destination.code
+      date_out = search.date_out.to_s
+      date_in = search.date_in.to_s
+      saved_searches_data[code] ||= {}
+      saved_searches_data[code][date_out] ||= []
+      saved_searches_data[code][date_out] << date_in
+    end
+  %>
+  <div class="card bg-base-100 shadow-xl"
+       data-controller="ryanair-search"
+       data-ryanair-search-saved-searches-value="<%= saved_searches_data.to_json %>"
+       data-ryanair-search-selected-destination-value="<%= @selected_destination_code || '' %>">
     <div class="card-body">
       <h2 class="card-title">Search for Flights from Riga (RIX)</h2>
 
@@ -19,7 +35,7 @@
                     data-action="change->ryanair-search#destinationChanged">
               <option value="">Select destination</option>
               <% @destinations.each do |destination| %>
-                <option value="<%= destination.code %>"><%= destination.display_name %></option>
+                <option value="<%= destination.code %>" <%= 'selected' if @selected_destination_code == destination.code %>><%= destination.display_name %></option>
               <% end %>
             </select>
           </div>

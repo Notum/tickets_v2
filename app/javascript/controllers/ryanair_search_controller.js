@@ -12,8 +12,18 @@ export default class extends Controller {
     "loadingIndicator"
   ]
 
+  static values = {
+    savedSearches: Object,
+    selectedDestination: String
+  }
+
   connect() {
-    this.resetForm()
+    // If a destination is pre-selected, load its dates
+    if (this.selectedDestinationValue) {
+      this.loadDatesForDestination(this.selectedDestinationValue)
+    } else {
+      this.resetForm()
+    }
   }
 
   resetForm() {
@@ -28,7 +38,7 @@ export default class extends Controller {
     }
   }
 
-  async destinationChanged(event) {
+  destinationChanged(event) {
     const destinationCode = event.target.value
 
     if (!destinationCode) {
@@ -36,6 +46,10 @@ export default class extends Controller {
       return
     }
 
+    this.loadDatesForDestination(destinationCode)
+  }
+
+  async loadDatesForDestination(destinationCode) {
     this.showLoading()
 
     try {
@@ -77,10 +91,22 @@ export default class extends Controller {
 
       if (data.dates && data.dates.length > 0) {
         // Filter dates to only show those after date_out
-        const filteredDates = data.dates.filter(d => d > dateOut)
-        this.populateDateSelect(this.dateInSelectTarget, filteredDates)
-        this.dateInContainerTarget.classList.remove("hidden")
-        this.submitButtonTarget.disabled = true
+        let filteredDates = data.dates.filter(d => d > dateOut)
+
+        // Filter out already saved date_in values for this destination + date_out
+        const savedForDestination = this.savedSearchesValue[destinationCode] || {}
+        const savedDatesIn = savedForDestination[dateOut] || []
+        filteredDates = filteredDates.filter(d => !savedDatesIn.includes(d))
+
+        if (filteredDates.length > 0) {
+          this.populateDateSelect(this.dateInSelectTarget, filteredDates)
+          this.dateInContainerTarget.classList.remove("hidden")
+          this.submitButtonTarget.disabled = true
+        } else {
+          alert("All available return dates for this outbound flight are already saved")
+          this.dateInContainerTarget.classList.add("hidden")
+          this.submitButtonTarget.disabled = true
+        }
       } else {
         alert("No available return dates for this flight")
         this.dateInContainerTarget.classList.add("hidden")
