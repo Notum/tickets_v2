@@ -24,7 +24,7 @@ module Bode
       if matching_flight
         update_with_price(matching_flight)
       else
-        update_with_error("Flight not found for dates #{@flight_search.date_out} - #{@flight_search.date_in}")
+        remove_unavailable_flight
       end
     rescue StandardError => e
       Rails.logger.error "[Bode::PriceFetchService] Error: #{e.message}"
@@ -78,6 +78,18 @@ module Bode
     def update_with_error(message)
       @flight_search.update!(status: "error", api_response: { error: message }.to_json)
       { success: false, error: message }
+    end
+
+    def remove_unavailable_flight
+      destination_name = @flight_search.bode_destination.name
+      date_out = @flight_search.date_out
+      date_in = @flight_search.date_in
+      flight_id = @flight_search.id
+
+      @flight_search.destroy!
+
+      Rails.logger.info "[Bode::PriceFetchService] Removed unavailable flight ##{flight_id}: #{destination_name} (#{date_out} - #{date_in})"
+      { success: false, removed: true, message: "Flight no longer available" }
     end
   end
 end
