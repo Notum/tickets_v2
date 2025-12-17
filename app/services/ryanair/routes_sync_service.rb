@@ -16,9 +16,12 @@ module Ryanair
 
       stats = sync_destinations(destinations)
 
-      Rails.logger.info "[Ryanair::RoutesSyncService] Sync completed: #{stats[:created]} created, #{stats[:updated]} updated"
+      # Announce new routes to all users
+      announced_count = announce_new_routes
 
-      { success: true, **stats }
+      Rails.logger.info "[Ryanair::RoutesSyncService] Sync completed: #{stats[:created]} created, #{stats[:updated]} updated, #{announced_count} new routes announced"
+
+      { success: true, **stats, announced: announced_count }
     rescue StandardError => e
       Rails.logger.error "[Ryanair::RoutesSyncService] Error: #{e.message}"
       { success: false, error: e.message }
@@ -90,6 +93,34 @@ module Ryanair
       end
 
       { created: created, updated: updated, total: destinations.count }
+    end
+
+    def announce_new_routes
+      # Find routes that haven't been announced yet
+      new_routes = RyanairDestination.where(announced_at: nil)
+      return 0 if new_routes.empty?
+
+      # Prepare route data for email
+      new_routes_data = new_routes.map do |route|
+        {
+          name: route.name,
+          code: route.code,
+          city_name: route.city_name,
+          country_name: route.country_name
+        }
+      end
+
+      # Send email to all users
+      users = User.all
+      users.each do |user|
+        RyanairNewRouteMailer.new_routes_available(user, new_routes_data).deliver_later
+        Rails.logger.info "[Ryanair::RoutesSyncService] Sent new routes email to #{user.email}"
+      end
+
+      # Mark routes as announced
+      new_routes.update_all(announced_at: Time.current)
+
+      new_routes_data.count
     end
   end
 end

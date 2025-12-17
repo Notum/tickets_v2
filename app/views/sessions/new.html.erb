@@ -24,7 +24,7 @@
 
       <%= form_with url: login_path, method: :post, class: "space-y-4 mt-4" do |f| %>
         <div class="form-control">
-          <label class="label" for="email">
+          <label class="label pb-2" for="email">
             <span class="label-text">Email address</span>
           </label>
           <%= email_field_tag :email, nil,

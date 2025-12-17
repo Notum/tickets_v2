@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_12_12_125014) do
+ActiveRecord::Schema[8.0].define(version: 2025_12_17_113747) do
   create_table "bode_destinations", force: :cascade do |t|
     t.string "name", null: false
     t.string "charter_path", null: false
@@ -68,6 +68,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_12_12_125014) do
     t.datetime "last_synced_at"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.datetime "announced_at"
     t.index ["code"], name: "index_ryanair_destinations_on_code", unique: true
   end
 
