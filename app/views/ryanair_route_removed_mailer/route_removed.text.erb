@@ -1,0 +1,26 @@
+RYANAIR ROUTE DISCONTINUED
+==========================
+
+Hi <%= @user.email %>,
+
+Ryanair has discontinued the following route from Riga:
+
+<%= @removed_route[:name] %> (<%= @removed_route[:code] %>)
+<%= @removed_route[:city_name] %>, <%= @removed_route[:country_name] %>
+
+<% if @affected_flights.any? %>
+YOUR AFFECTED SAVED FLIGHTS
+---------------------------
+The following saved flight searches have been automatically removed:
+
+<% @affected_flights.each do |flight| %>
+Dates: <%= flight[:date_out].strftime("%d %b") %> - <%= flight[:date_in].strftime("%d %b %Y") %>
+<% if flight[:total_price] %>Last price: EUR <%= number_with_precision(flight[:total_price], precision: 2) %><% else %>No price recorded<% end %>
+
+<% end %>
+<% end %>
+---
+
+You received this because you had saved flights on this route.
+
+Tickets@Petrucho.me

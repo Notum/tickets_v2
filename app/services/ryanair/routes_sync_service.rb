@@ -14,14 +14,20 @@ module Ryanair
       destinations = parse_response(response)
       return { success: false, error: "No destinations found" } if destinations.empty?
 
+      # Get current destination codes from API
+      api_codes = destinations.map { |d| d[:code] }
+
       stats = sync_destinations(destinations)
 
       # Announce new routes to all users
       announced_count = announce_new_routes
 
-      Rails.logger.info "[Ryanair::RoutesSyncService] Sync completed: #{stats[:created]} created, #{stats[:updated]} updated, #{announced_count} new routes announced"
+      # Handle removed routes
+      removed_count = handle_removed_routes(api_codes)
 
-      { success: true, **stats, announced: announced_count }
+      Rails.logger.info "[Ryanair::RoutesSyncService] Sync completed: #{stats[:created]} created, #{stats[:updated]} updated, #{announced_count} new routes announced, #{removed_count} routes removed"
+
+      { success: true, **stats, announced: announced_count, removed: removed_count }
     rescue StandardError => e
       Rails.logger.error "[Ryanair::RoutesSyncService] Error: #{e.message}"
       { success: false, error: e.message }
@@ -121,6 +127,50 @@ module Ryanair
       new_routes.update_all(announced_at: Time.current)
 
       new_routes_data.count
+    end
+
+    def handle_removed_routes(api_codes)
+      # Find destinations that exist in DB but not in API response
+      removed_destinations = RyanairDestination.where.not(code: api_codes)
+      return 0 if removed_destinations.empty?
+
+      removed_count = 0
+
+      removed_destinations.each do |destination|
+        Rails.logger.info "[Ryanair::RoutesSyncService] Route removed: #{destination.name} (#{destination.code})"
+
+        # Prepare route data for email
+        removed_route_data = {
+          name: destination.name,
+          code: destination.code,
+          city_name: destination.city_name,
+          country_name: destination.country_name
+        }
+
+        # Find affected users and their flight searches
+        affected_searches = destination.ryanair_flight_searches.includes(:user)
+        users_with_flights = affected_searches.group_by(&:user)
+
+        # Send notification to each affected user
+        users_with_flights.each do |user, flights|
+          affected_flights_data = flights.map do |flight|
+            {
+              date_out: flight.date_out,
+              date_in: flight.date_in,
+              total_price: flight.total_price
+            }
+          end
+
+          RyanairRouteRemovedMailer.route_removed(user, removed_route_data, affected_flights_data).deliver_later
+          Rails.logger.info "[Ryanair::RoutesSyncService] Sent route removed email to #{user.email} for #{destination.code}"
+        end
+
+        # Delete destination (will cascade delete flight searches due to dependent: :destroy)
+        destination.destroy!
+        removed_count += 1
+      end
+
+      removed_count
     end
   end
 end
