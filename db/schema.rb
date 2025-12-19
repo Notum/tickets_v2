@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_12_19_175225) do
+ActiveRecord::Schema[8.0].define(version: 2025_12_19_200603) do
   create_table "airbaltic_destinations", force: :cascade do |t|
     t.string "code", null: false
     t.string "name", null: false
@@ -21,6 +21,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_12_19_175225) do
     t.datetime "last_synced_at"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.boolean "active", default: true, null: false
     t.index ["code"], name: "index_airbaltic_destinations_on_code", unique: true
   end
 

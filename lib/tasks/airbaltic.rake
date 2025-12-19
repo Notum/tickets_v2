@@ -1,5 +1,18 @@
 namespace :airbaltic do
-  desc "Seed AirBaltic destinations from RIX"
+  desc "Sync AirBaltic destinations from TripX API"
+  task sync_destinations: :environment do
+    puts "Syncing AirBaltic destinations from TripX API..."
+    result = Airbaltic::DestinationsSyncService.new.call
+
+    if result[:success]
+      puts "Sync completed: #{result[:created]} created, #{result[:updated]} updated, #{result[:deactivated]} deactivated, #{result[:total]} total"
+    else
+      puts "Sync failed: #{result[:error]}"
+      exit 1
+    end
+  end
+
+  desc "Seed AirBaltic destinations from RIX (legacy - use sync_destinations instead)"
   task seed_destinations: :environment do
     destinations = [
       # Baltic States

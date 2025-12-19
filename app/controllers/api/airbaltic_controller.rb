@@ -1,7 +1,7 @@
 module Api
   class AirbalticController < ApplicationController
     def destinations
-      destinations = AirbalticDestination.ordered.map do |dest|
+      destinations = AirbalticDestination.active.ordered.map do |dest|
         {
           code: dest.code,
           name: dest.name,

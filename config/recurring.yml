@@ -25,6 +25,12 @@ refresh_bode_prices:
   queue: default
   schedule: every hour at minute 0
 
+# Sync AirBaltic destinations every hour at :30
+sync_airbaltic_destinations:
+  class: SyncAirbalticDestinationsJob
+  queue: default
+  schedule: every hour at minute 30
+
 # Refresh all AirBaltic flight prices every hour at :00
 refresh_airbaltic_prices:
   class: RefreshAllAirbalticPricesJob
@@ -51,6 +57,11 @@ production:
     class: RefreshAllBodePricesJob
     queue: default
     schedule: every hour at minute 0
+
+  sync_airbaltic_destinations:
+    class: SyncAirbalticDestinationsJob
+    queue: default
+    schedule: every hour at minute 30
 
   refresh_airbaltic_prices:
     class: RefreshAllAirbalticPricesJob

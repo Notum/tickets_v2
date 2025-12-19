@@ -1,7 +1,7 @@
 module Tickets
   class AirbalticController < ApplicationController
     def index
-      @destinations = AirbalticDestination.ordered
+      @destinations = AirbalticDestination.active.ordered
       @saved_searches = current_user.airbaltic_flight_searches.includes(:airbaltic_destination).recent
       @selected_destination_code = params[:destination_code] if params[:destination_code].present?
     end

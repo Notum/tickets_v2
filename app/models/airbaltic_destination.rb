@@ -5,6 +5,7 @@ class AirbalticDestination < ApplicationRecord
   validates :name, presence: true
 
   scope :ordered, -> { order(:name) }
+  scope :active, -> { where(active: true) }
 
   def display_name
     "#{name} (#{code})"
