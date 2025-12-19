@@ -25,6 +25,12 @@ refresh_bode_prices:
   queue: default
   schedule: every hour at minute 0
 
+# Refresh all AirBaltic flight prices every hour at :00
+refresh_airbaltic_prices:
+  class: RefreshAllAirbalticPricesJob
+  queue: default
+  schedule: every hour at minute 0
+
 production:
   sync_ryanair_routes:
     class: SyncRyanairRoutesJob
@@ -43,6 +49,11 @@ production:
 
   refresh_bode_prices:
     class: RefreshAllBodePricesJob
+    queue: default
+    schedule: every hour at minute 0
+
+  refresh_airbaltic_prices:
+    class: RefreshAllAirbalticPricesJob
     queue: default
     schedule: every hour at minute 0
 

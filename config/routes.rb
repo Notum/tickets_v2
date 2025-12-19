@@ -22,7 +22,11 @@ Rails.application.routes.draw do
     delete "ryanair/:id", to: "tickets/ryanair#destroy", as: :ryanair_delete
     post "ryanair/:id/refresh_price", to: "tickets/ryanair#refresh_price", as: :ryanair_refresh_price
 
-    get :airbaltic, to: "tickets#airbaltic"
+    # AirBaltic
+    get :airbaltic, to: "tickets/airbaltic#index"
+    post :airbaltic, to: "tickets/airbaltic#create"
+    delete "airbaltic/:id", to: "tickets/airbaltic#destroy", as: :airbaltic_delete
+    post "airbaltic/:id/refresh_price", to: "tickets/airbaltic#refresh_price", as: :airbaltic_refresh_price
     get :norwegian, to: "tickets#norwegian"
   end
 
@@ -33,6 +37,11 @@ Rails.application.routes.draw do
     get "ryanair/dates_out", to: "ryanair#dates_out"
     get "ryanair/dates_in", to: "ryanair#dates_in"
     post "ryanair/flight_searches", to: "ryanair#flight_searches"
+
+    # AirBaltic
+    get "airbaltic/destinations", to: "airbaltic#destinations"
+    get "airbaltic/dates_out", to: "airbaltic#dates_out"
+    get "airbaltic/dates_in", to: "airbaltic#dates_in"
 
     # Bode.lv
     get "bode/destinations", to: "bode#destinations"

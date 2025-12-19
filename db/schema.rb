@@ -10,7 +10,52 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_12_17_113747) do
+ActiveRecord::Schema[8.0].define(version: 2025_12_19_175225) do
+  create_table "airbaltic_destinations", force: :cascade do |t|
+    t.string "code", null: false
+    t.string "name", null: false
+    t.string "city_name"
+    t.string "country_name"
+    t.string "country_code"
+    t.datetime "announced_at"
+    t.datetime "last_synced_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["code"], name: "index_airbaltic_destinations_on_code", unique: true
+  end
+
+  create_table "airbaltic_flight_searches", force: :cascade do |t|
+    t.integer "user_id", null: false
+    t.integer "airbaltic_destination_id", null: false
+    t.date "date_out", null: false
+    t.date "date_in", null: false
+    t.decimal "price_out", precision: 10, scale: 2
+    t.decimal "price_in", precision: 10, scale: 2
+    t.decimal "total_price", precision: 10, scale: 2
+    t.boolean "is_direct_out"
+    t.boolean "is_direct_in"
+    t.string "status", default: "pending"
+    t.text "api_response"
+    t.datetime "priced_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["airbaltic_destination_id"], name: "index_airbaltic_flight_searches_on_airbaltic_destination_id"
+    t.index ["user_id", "airbaltic_destination_id", "date_out", "date_in"], name: "idx_airbaltic_unique_search", unique: true
+    t.index ["user_id"], name: "index_airbaltic_flight_searches_on_user_id"
+  end
+
+  create_table "airbaltic_price_histories", force: :cascade do |t|
+    t.integer "airbaltic_flight_search_id", null: false
+    t.decimal "price_out", precision: 10, scale: 2
+    t.decimal "price_in", precision: 10, scale: 2
+    t.decimal "total_price", precision: 10, scale: 2
+    t.datetime "recorded_at", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["airbaltic_flight_search_id", "recorded_at"], name: "idx_airbaltic_price_history_search_recorded"
+    t.index ["airbaltic_flight_search_id"], name: "index_airbaltic_price_histories_on_airbaltic_flight_search_id"
+  end
+
   create_table "bode_destinations", force: :cascade do |t|
     t.string "name", null: false
     t.string "charter_path", null: false
@@ -113,6 +158,9 @@ ActiveRecord::Schema[8.0].define(version: 2025_12_17_113747) do
     t.index ["email"], name: "index_users_on_email", unique: true
   end
 
+  add_foreign_key "airbaltic_flight_searches", "airbaltic_destinations"
+  add_foreign_key "airbaltic_flight_searches", "users"
+  add_foreign_key "airbaltic_price_histories", "airbaltic_flight_searches"
   add_foreign_key "bode_flight_searches", "bode_destinations"
   add_foreign_key "bode_flight_searches", "users"
   add_foreign_key "bode_price_histories", "bode_flight_searches"

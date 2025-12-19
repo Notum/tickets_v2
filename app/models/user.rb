@@ -1,6 +1,7 @@
 class User < ApplicationRecord
   has_many :ryanair_flight_searches, dependent: :destroy
   has_many :bode_flight_searches, dependent: :destroy
+  has_many :airbaltic_flight_searches, dependent: :destroy
 
   validates :email, presence: true,
                     uniqueness: { case_sensitive: false },
