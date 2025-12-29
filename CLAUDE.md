@@ -88,6 +88,39 @@ Price drop notifications and route change alerts are sent via:
 - `{airline}_search_controller.js` - Dynamic flight search forms with cascading dropdowns
 - `price_chart_controller.js` - Price history visualization
 
+## Key Patterns
+
+### Service Return Values
+All price fetch services return a hash with `{ success: true/false, ... }`:
+- On success: `{ success: true, price_out: ..., price_in: ..., total: ... }`
+- On error: `{ success: false, error: "message" }`
+- Price drops include: `{ ..., price_drop: { savings: ..., previous_price: ..., current_price: ... } }`
+
+### Price Drop Notification Flow
+1. `PriceFetchService` compares new total price with previous
+2. If price dropped, returns `price_drop` hash in result
+3. `RefreshAll{Airline}PricesJob` collects price drops and sends email via `{Airline}PriceDropMailer`
+
+### External Dependencies
+
+#### FlareSolverr (Cloudflare Bypass)
+Norwegian airline's API is protected by Cloudflare bot detection. We use [FlareSolverr](https://github.com/FlareSolverr/FlareSolverr) - a proxy server running in Docker that uses a real browser to solve Cloudflare challenges.
+
+**Running FlareSolverr locally:**
+```bash
+docker run -d --name flaresolverr -p 8191:8191 ghcr.io/flaresolverr/flaresolverr:latest
+```
+
+**Configuration:**
+- `FLARESOLVERR_URL` env var (default: `http://localhost:8191/v1`)
+- Timeout: 60 seconds per request
+
+**Usage in code:**
+- `FlaresolverrService` (`app/services/flaresolverr_service.rb`) wraps FlareSolverr API
+- Used by `Norwegian::PriceFetchService`, `Norwegian::DestinationsSyncService`, and Norwegian date services
+- `FlaresolverrService.available?` - check if FlareSolverr is running
+- Raises `FlaresolverrService::FlaresolverrError` on failures
+
 ## Key Configuration
 
 - Our app is running locally (DEV) on port 4000
