@@ -9,7 +9,7 @@ class FlaresolverrService
 
   # Session-based request: First GET a page to establish cookies, then POST to API
   # This is needed for APIs that require a valid session (like FlyDubai)
-  def fetch_with_session(get_url, post_url, post_data)
+  def fetch_with_session(get_url, post_url, post_data, headers: nil)
     session_id = nil
 
     begin
@@ -25,7 +25,7 @@ class FlaresolverrService
 
       # Step 3: POST to the API with the same session (cookies)
       Rails.logger.info "[FlaresolverrService] POST #{post_url} with session cookies"
-      post_with_session(post_url, post_data, session_id)
+      post_with_session(post_url, post_data, session_id, headers: headers)
     ensure
       # Step 4: Always destroy the session
       destroy_session(session_id) if session_id
@@ -55,15 +55,17 @@ class FlaresolverrService
     parse_solution_response(response)
   end
 
-  def post_with_session(url, post_data, session_id)
-    response = send_command({
+  def post_with_session(url, post_data, session_id, headers: nil)
+    command = {
       cmd: "request.post",
       url: url,
       session: session_id,
       maxTimeout: MAX_TIMEOUT,
       postData: post_data.is_a?(String) ? post_data : post_data.to_json
-    })
+    }
+    command[:headers] = headers if headers.present?
 
+    response = send_command(command)
     parse_solution_response(response)
   end
 
@@ -129,7 +131,8 @@ class FlaresolverrService
 
   # POST request through FlareSolverr, bypassing Cloudflare protection
   # Returns parsed JSON if response is JSON, otherwise returns the raw HTML
-  def post(url, post_data)
+  # Optional headers hash for APIs that require specific headers
+  def post(url, post_data, headers: nil)
     Rails.logger.info "[FlaresolverrService] POST to: #{url}"
 
     uri = URI(FLARESOLVERR_URL)
@@ -138,12 +141,18 @@ class FlaresolverrService
 
     request = Net::HTTP::Post.new(uri.path)
     request["Content-Type"] = "application/json"
-    request.body = {
+
+    body = {
       cmd: "request.post",
       url: url,
       maxTimeout: MAX_TIMEOUT,
       postData: post_data.is_a?(String) ? post_data : post_data.to_json
-    }.to_json
+    }
+
+    # Add custom headers if provided
+    body[:headers] = headers if headers.present?
+
+    request.body = body.to_json
 
     response = http.request(request)
 
