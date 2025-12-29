@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-TicketsV2 is a flight ticket price tracking application built with Rails 8.0 and Ruby 3.4.5. It monitors flight prices from five airlines (Ryanair, AirBaltic, Norwegian, Bode.lv charter flights, FlyDubai) departing from Riga (RIX), tracks price history, and sends email notifications when prices drop.
+TicketsV2 is a flight ticket price tracking application built with Rails 8.0 and Ruby 3.4.5. It monitors flight prices from six airlines (Ryanair, AirBaltic, Norwegian, Bode.lv charter flights, FlyDubai, Turkish Airlines) departing from Riga (RIX), tracks price history, and sends email notifications when prices drop.
 
 ## Common Commands
 
@@ -43,6 +43,18 @@ bin/rails db:seed       # Load seed data
 bin/jobs             # Run Solid Queue job worker
 ```
 
+### Airline Rake Tasks
+```bash
+bin/rails ryanair:sync_routes                          # Sync Ryanair destinations
+bin/rails ryanair:list_destinations                    # List all Ryanair destinations
+bin/rails ryanair:test_dates_out[DUB]                  # Test outbound dates to destination
+bin/rails ryanair:test_dates_in[DUB]                   # Test return dates from destination
+bin/rails ryanair:test_price_fetch[1]                  # Test price fetch for flight search ID
+bin/rails airbaltic:sync_destinations                  # Sync AirBaltic destinations
+bin/rails bode:sync_destinations                       # Sync Bode.lv destinations
+bin/rails users:create[user@example.com]               # Create a new user
+```
+
 ## Architecture
 
 ### Tech Stack
@@ -58,7 +70,7 @@ Each airline follows the same pattern with three models:
 - `{Airline}FlightSearch` - User's tracked flight (dates, prices, status)
 - `{Airline}PriceHistory` - Historical price records for charting
 
-Airlines: `Ryanair`, `Airbaltic`, `Norwegian`, `Bode` (charter flights), `Flydubai` (RIX-DXB only)
+Airlines: `Ryanair`, `Airbaltic`, `Norwegian`, `Bode` (charter flights), `Flydubai` (RIX-DXB only), `Turkish` (1-stop via Istanbul)
 
 ### Service Layer (`app/services/`)
 Each airline has services namespaced under its name:
@@ -140,6 +152,13 @@ FlyDubai has a hardcoded single route (Riga to Dubai) with no destinations table
   "variant": "1"
 }
 ```
+
+#### Turkish Airlines (1-Stop via Istanbul)
+Turkish Airlines flights are searched via a flight matrix API with 1-stop connections through Istanbul (IST):
+- `Turkish::FlightMatrixService` - Fetches flight matrix/calendar data
+- `Turkish::DestinationsSearchService` - Searches available destinations
+- `Turkish::PriceFetchService` - Fetches prices for specific dates
+- No destinations table (destinations searched dynamically)
 
 ## Key Configuration
 

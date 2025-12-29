@@ -1,0 +1,23 @@
+<%= @airline.upcase %> FETCH FAILURE ALERT
+<%= "=" * (@airline.length + 21) %>
+
+The following <%= @failures.count %> fetch operation(s) failed for <%= @airline %>:
+
+<% @failures.each_with_index do |failure, index| %>
+ERROR #<%= index + 1 %><% if failure[:flight_search_id] %> (Flight Search #<%= failure[:flight_search_id] %>)<% end %>
+<%= "-" * 40 %>
+<% if failure[:destination] %>
+Route: RIX -> <%= failure[:destination] %>
+<% end %>
+<% if failure[:dates] %>
+Dates: <%= failure[:dates] %>
+<% end %>
+Error: <%= failure[:error] %>
+
+<% end %>
+---
+
+Timestamp: <%= @timestamp.strftime("%Y-%m-%d %H:%M:%S %Z") %>
+Environment: <%= Rails.env %>
+
+Tickets@Petrucho.me - System Alert
