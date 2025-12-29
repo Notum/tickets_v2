@@ -1,0 +1,20 @@
+FLYDUBAI PRICE DROP ALERT
+===========================
+
+Hi <%= @user.email %>,
+
+Great news! The following flight prices have dropped:
+
+<% @price_drops.each do |drop| %>
+<%= drop[:destination_name] %> (<%= drop[:destination_code] %>)
+Dates: <%= drop[:date_out].strftime("%d %b") %> - <%= drop[:date_in].strftime("%d %b %Y") %>
+Previous Price: EUR <%= number_with_precision(drop[:previous_price], precision: 2) %>
+Current Price: EUR <%= number_with_precision(drop[:current_price], precision: 2) %>
+Savings: EUR <%= number_with_precision(drop[:savings], precision: 2) %>
+
+<% end %>
+---
+
+You are receiving this email because the price dropped by more than EUR <%= number_with_precision(@user.price_notification_threshold, precision: 2) %> (your notification threshold).
+
+Tickets@Petrucho.me

@@ -33,6 +33,12 @@ Rails.application.routes.draw do
     post :norwegian, to: "tickets/norwegian#create"
     delete "norwegian/:id", to: "tickets/norwegian#destroy", as: :norwegian_delete
     post "norwegian/:id/refresh_price", to: "tickets/norwegian#refresh_price", as: :norwegian_refresh_price
+
+    # FlyDubai (RIX-DXB only)
+    get :flydubai, to: "tickets/flydubai#index"
+    post :flydubai, to: "tickets/flydubai#create"
+    delete "flydubai/:id", to: "tickets/flydubai#destroy", as: :flydubai_delete
+    post "flydubai/:id/refresh_price", to: "tickets/flydubai#refresh_price", as: :flydubai_refresh_price
   end
 
   # API endpoints (AJAX)
@@ -56,6 +62,10 @@ Rails.application.routes.draw do
     get "norwegian/destinations", to: "norwegian#destinations"
     get "norwegian/dates_out", to: "norwegian#dates_out"
     get "norwegian/dates_in", to: "norwegian#dates_in"
+
+    # FlyDubai (no destinations - hardcoded RIX-DXB)
+    get "flydubai/dates_out", to: "flydubai#dates_out"
+    get "flydubai/dates_in", to: "flydubai#dates_in"
   end
 
   # Reveal health status on /up that returns 200 if the app boots with no exceptions, otherwise 500.

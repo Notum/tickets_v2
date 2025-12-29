@@ -3,6 +3,7 @@ class User < ApplicationRecord
   has_many :bode_flight_searches, dependent: :destroy
   has_many :airbaltic_flight_searches, dependent: :destroy
   has_many :norwegian_flight_searches, dependent: :destroy
+  has_many :flydubai_flight_searches, dependent: :destroy
 
   validates :email, presence: true,
                     uniqueness: { case_sensitive: false },

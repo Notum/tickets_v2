@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-TicketsV2 is a flight ticket price tracking application built with Rails 8.0 and Ruby 3.4.5. It monitors flight prices from four airlines (Ryanair, AirBaltic, Norwegian, Bode.lv charter flights) departing from Riga (RIX), tracks price history, and sends email notifications when prices drop.
+TicketsV2 is a flight ticket price tracking application built with Rails 8.0 and Ruby 3.4.5. It monitors flight prices from five airlines (Ryanair, AirBaltic, Norwegian, Bode.lv charter flights, FlyDubai) departing from Riga (RIX), tracks price history, and sends email notifications when prices drop.
 
 ## Common Commands
 
@@ -58,7 +58,7 @@ Each airline follows the same pattern with three models:
 - `{Airline}FlightSearch` - User's tracked flight (dates, prices, status)
 - `{Airline}PriceHistory` - Historical price records for charting
 
-Airlines: `Ryanair`, `Airbaltic`, `Norwegian`, `Bode` (charter flights)
+Airlines: `Ryanair`, `Airbaltic`, `Norwegian`, `Bode` (charter flights), `Flydubai` (RIX-DXB only)
 
 ### Service Layer (`app/services/`)
 Each airline has services namespaced under its name:
@@ -104,7 +104,7 @@ All price fetch services return a hash with `{ success: true/false, ... }`:
 ### External Dependencies
 
 #### FlareSolverr (Cloudflare Bypass)
-Norwegian airline's API is protected by Cloudflare bot detection. We use [FlareSolverr](https://github.com/FlareSolverr/FlareSolverr) - a proxy server running in Docker that uses a real browser to solve Cloudflare challenges.
+Norwegian and FlyDubai APIs are protected by Cloudflare bot detection. We use [FlareSolverr](https://github.com/FlareSolverr/FlareSolverr) - a proxy server running in Docker that uses a real browser to solve Cloudflare challenges.
 
 **Running FlareSolverr locally:**
 ```bash
@@ -117,9 +117,29 @@ docker run -d --name flaresolverr -p 8191:8191 ghcr.io/flaresolverr/flaresolverr
 
 **Usage in code:**
 - `FlaresolverrService` (`app/services/flaresolverr_service.rb`) wraps FlareSolverr API
-- Used by `Norwegian::PriceFetchService`, `Norwegian::DestinationsSyncService`, and Norwegian date services
+- Used by Norwegian and FlyDubai services (date services, price fetch)
 - `FlaresolverrService.available?` - check if FlareSolverr is running
 - Raises `FlaresolverrService::FlaresolverrError` on failures
+
+#### FlyDubai (RIX-DXB Route)
+FlyDubai has a hardcoded single route (Riga to Dubai) with no destinations table:
+- **Calendar API**: `GET https://www.flydubai.com/api/Calendar/RIX/DXB?fromDate=DD-Month-YYYY` (available flight dates)
+- **Price API**: `POST https://flights2.flydubai.com/api/flights/1` with JSON payload containing search criteria
+- Both APIs require FlareSolverr (Cloudflare protected)
+- No destination sync job needed
+
+**Price API Payload:**
+```json
+{
+  "cabinClass": "Economy",
+  "paxInfo": { "adultCount": 1, "childCount": 0, "infantCount": 0 },
+  "searchCriteria": [
+    { "date": "MM/DD/YYYY 12:00 AM", "dest": "DXB", "direction": "outBound", "origin": "RIX" },
+    { "date": "MM/DD/YYYY 12:00 AM", "dest": "RIX", "direction": "inBound", "origin": "DXB" }
+  ],
+  "variant": "1"
+}
+```
 
 ## Key Configuration
 

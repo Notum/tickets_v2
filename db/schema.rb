@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_12_29_102612) do
+ActiveRecord::Schema[8.0].define(version: 2025_12_29_124146) do
   create_table "airbaltic_destinations", force: :cascade do |t|
     t.string "code", null: false
     t.string "name", null: false
@@ -95,6 +95,36 @@ ActiveRecord::Schema[8.0].define(version: 2025_12_29_102612) do
     t.datetime "updated_at", null: false
     t.index ["bode_flight_search_id", "recorded_at"], name: "idx_bode_price_history_search_recorded"
     t.index ["bode_flight_search_id"], name: "index_bode_price_histories_on_bode_flight_search_id"
+  end
+
+  create_table "flydubai_flight_searches", force: :cascade do |t|
+    t.integer "user_id", null: false
+    t.date "date_out", null: false
+    t.date "date_in", null: false
+    t.decimal "price_out", precision: 10, scale: 2
+    t.decimal "price_in", precision: 10, scale: 2
+    t.decimal "total_price", precision: 10, scale: 2
+    t.boolean "is_direct_out"
+    t.boolean "is_direct_in"
+    t.string "status", default: "pending"
+    t.text "api_response"
+    t.datetime "priced_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["user_id", "date_out", "date_in"], name: "idx_flydubai_unique_search", unique: true
+    t.index ["user_id"], name: "index_flydubai_flight_searches_on_user_id"
+  end
+
+  create_table "flydubai_price_histories", force: :cascade do |t|
+    t.integer "flydubai_flight_search_id", null: false
+    t.decimal "price_out", precision: 10, scale: 2
+    t.decimal "price_in", precision: 10, scale: 2
+    t.decimal "total_price", precision: 10, scale: 2
+    t.datetime "recorded_at", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["flydubai_flight_search_id", "recorded_at"], name: "idx_flydubai_price_history_search_recorded"
+    t.index ["flydubai_flight_search_id"], name: "index_flydubai_price_histories_on_flydubai_flight_search_id"
   end
 
   create_table "norwegian_destinations", force: :cascade do |t|
@@ -210,6 +240,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_12_29_102612) do
   add_foreign_key "bode_flight_searches", "bode_destinations"
   add_foreign_key "bode_flight_searches", "users"
   add_foreign_key "bode_price_histories", "bode_flight_searches"
+  add_foreign_key "flydubai_flight_searches", "users"
+  add_foreign_key "flydubai_price_histories", "flydubai_flight_searches"
   add_foreign_key "norwegian_flight_searches", "norwegian_destinations"
   add_foreign_key "norwegian_flight_searches", "users"
   add_foreign_key "norwegian_price_histories", "norwegian_flight_searches"
