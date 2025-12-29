@@ -1,0 +1,18 @@
+NEW NORWEGIAN ROUTES FROM RIGA
+==============================
+
+Hi <%= @user.email %>,
+
+Norwegian has announced new routes from Riga!
+
+<% @new_routes.each do |route| %>
+<%= route[:name] %> (<%= route[:code] %>)
+City: <%= route[:city_name] %>
+Country: <%= route[:country_name] %>
+
+<% end %>
+---
+
+You receive notifications about new Norwegian routes from Riga.
+
+Tickets@Petrucho.me

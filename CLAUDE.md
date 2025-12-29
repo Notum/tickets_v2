@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is a Rails 8.0 application called TicketsV2 using Ruby 3.4.5. It's a fresh Rails app with Hotwire (Turbo + Stimulus), Tailwind CSS, and SQLite database.
+TicketsV2 is a flight ticket price tracking application built with Rails 8.0 and Ruby 3.4.5. It monitors flight prices from four airlines (Ryanair, AirBaltic, Norwegian, Bode.lv charter flights) departing from Riga (RIX), tracks price history, and sends email notifications when prices drop.
 
 ## Common Commands
 
@@ -45,15 +45,51 @@ bin/jobs             # Run Solid Queue job worker
 
 ## Architecture
 
-- **Frontend**: Hotwire (Turbo + Stimulus) with Tailwind CSS via Propshaft asset pipeline
+### Tech Stack
+- **Frontend**: Hotwire (Turbo + Stimulus) with Tailwind CSS + DaisyUI via Propshaft asset pipeline
 - **JavaScript**: ESM import maps (no Node.js/npm build step)
 - **Database**: SQLite with Solid Cache, Solid Queue, and Solid Cable for caching, jobs, and WebSocket
 - **Deployment**: Kamal-ready with Docker and Thruster for HTTP caching
+- **Email**: Mailgun for delivery
 
-## Key Directories
+### Domain Model
+Each airline follows the same pattern with three models:
+- `{Airline}Destination` - Airport/destination data synced from external APIs
+- `{Airline}FlightSearch` - User's tracked flight (dates, prices, status)
+- `{Airline}PriceHistory` - Historical price records for charting
 
-- `app/javascript/controllers/` - Stimulus controllers
-- `app/assets/tailwind/application.css` - Tailwind entry point
-- `db/` - SQLite databases and schemas (including cache, queue, cable schemas)
+Airlines: `Ryanair`, `Airbaltic`, `Norwegian`, `Bode` (charter flights)
+
+### Service Layer (`app/services/`)
+Each airline has services namespaced under its name:
+- `{Airline}::PriceFetchService` - Fetches current prices from airline API
+- `{Airline}::DestinationsSyncService` or `RouteSyncService` - Syncs available destinations
+- Date services for fetching available flight dates
+
+### Background Jobs (`app/jobs/`)
+Recurring jobs configured in `config/recurring.yml` (Solid Queue):
+- `Sync{Airline}DestinationsJob` / `SyncRyanairRoutesJob` - Hourly destination sync
+- `RefreshAll{Airline}PricesJob` - Hourly price refresh for all tracked flights
+- `Fetch{Airline}PriceJob` - Single flight price fetch
+
+### Controllers
+- `Tickets::{Airline}Controller` - CRUD for user's flight searches per airline
+- `Api::{Airline}Controller` - AJAX endpoints for dynamic form data (destinations, dates)
+- `SessionsController` - Email-based authentication (no password)
+- `ProfilesController` - User settings (price notification threshold)
+
+### Mailers
+Price drop notifications and route change alerts are sent via:
+- `{Airline}PriceDropMailer` - Notifies users when tracked flight prices drop
+- `RyanairNewRouteMailer` / `RyanairRouteRemovedMailer` - Ryanair route changes
+- `NorwegianNewRouteMailer` - Norwegian route changes
+
+### Stimulus Controllers (`app/javascript/controllers/`)
+- `{airline}_search_controller.js` - Dynamic flight search forms with cascading dropdowns
+- `price_chart_controller.js` - Price history visualization
+
+## Key Configuration
+
 - Our app is running locally (DEV) on port 4000
 - If server restart is needed - ask user to do it. Do not try to initiate server restart/start by yourself
+- All flights are from Riga (RIX) - this is hardcoded in services

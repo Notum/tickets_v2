@@ -37,6 +37,24 @@ refresh_airbaltic_prices:
   queue: default
   schedule: every hour at minute 0
 
+# Sync Norwegian destinations twice daily (6:00 and 18:00)
+# Also triggers dates prefetch after successful sync
+sync_norwegian_destinations_morning:
+  class: SyncNorwegianDestinationsJob
+  queue: default
+  schedule: every day at 6:00 Europe/Riga
+
+sync_norwegian_destinations_evening:
+  class: SyncNorwegianDestinationsJob
+  queue: default
+  schedule: every day at 18:00 Europe/Riga
+
+# Refresh Norwegian flight prices hourly (for user's tracked flights)
+refresh_norwegian_prices:
+  class: RefreshAllNorwegianPricesJob
+  queue: default
+  schedule: every hour at minute 0
+
 production:
   sync_ryanair_routes:
     class: SyncRyanairRoutesJob
@@ -65,6 +83,24 @@ production:
 
   refresh_airbaltic_prices:
     class: RefreshAllAirbalticPricesJob
+    queue: default
+    schedule: every hour at minute 0
+
+  # Sync Norwegian destinations twice daily (6:00 and 18:00)
+  # Also triggers dates prefetch after successful sync
+  sync_norwegian_destinations_morning:
+    class: SyncNorwegianDestinationsJob
+    queue: default
+    schedule: every day at 6:00 Europe/Riga
+
+  sync_norwegian_destinations_evening:
+    class: SyncNorwegianDestinationsJob
+    queue: default
+    schedule: every day at 18:00 Europe/Riga
+
+  # Refresh Norwegian flight prices hourly (for user's tracked flights)
+  refresh_norwegian_prices:
+    class: RefreshAllNorwegianPricesJob
     queue: default
     schedule: every hour at minute 0
 
