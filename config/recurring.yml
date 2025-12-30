@@ -67,6 +67,12 @@ refresh_turkish_prices:
   queue: default
   schedule: every hour at minute 0
 
+# Cleanup expired flight searches daily at 1:00 AM Riga time
+cleanup_expired_flights:
+  class: CleanupExpiredFlightSearchesJob
+  queue: default
+  schedule: every day at 1:00 Europe/Riga
+
 production:
   sync_ryanair_routes:
     class: SyncRyanairRoutesJob
@@ -131,3 +137,9 @@ production:
   clear_solid_queue_finished_jobs:
     command: "SolidQueue::Job.clear_finished_in_batches(sleep_between_batches: 0.3)"
     schedule: every hour at minute 12
+
+  # Cleanup expired flight searches daily at 1:00 AM Riga time
+  cleanup_expired_flights:
+    class: CleanupExpiredFlightSearchesJob
+    queue: default
+    schedule: every day at 1:00 Europe/Riga
