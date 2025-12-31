@@ -1,14 +1,14 @@
-<div class="navbar bg-base-100 shadow-md">
-  <div class="container mx-auto max-w-7xl px-4 flex justify-between">
-    <div class="flex items-center gap-2">
+<div class="navbar bg-base-100 shadow-md min-h-14">
+  <div class="container mx-auto max-w-7xl px-2 sm:px-4 flex justify-between">
+    <div class="flex items-center gap-1 sm:gap-2">
       <!-- Mobile dropdown -->
       <div class="dropdown lg:hidden">
-        <div tabindex="0" role="button" class="btn btn-ghost btn-sm">
+        <div tabindex="0" role="button" class="btn btn-ghost btn-sm px-2">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h8m-8 6h16" />
           </svg>
         </div>
-        <ul tabindex="0" class="menu menu-sm dropdown-content bg-base-100 rounded-box z-10 mt-3 w-52 p-2 shadow">
+        <ul tabindex="0" class="menu menu-sm dropdown-content bg-base-100 rounded-box z-50 mt-3 w-48 p-2 shadow-lg">
           <li class="menu-title">Tickets</li>
           <li><%= link_to "Bode.lv", tickets_bode_path %></li>
           <li><%= link_to "Ryanair", tickets_ryanair_path %></li>
@@ -16,11 +16,13 @@
           <li><%= link_to "Norwegian", tickets_norwegian_path %></li>
           <li><%= link_to "FlyDubai", tickets_flydubai_path %></li>
           <li><%= link_to "Turkish Airlines", tickets_turkish_path %></li>
+          <li class="divider my-1"></li>
+          <li><%= link_to "Profile", profile_path %></li>
         </ul>
       </div>
 
       <!-- Logo -->
-      <a class="btn btn-ghost text-xl text-primary px-0">TicketsV2</a>
+      <a class="btn btn-ghost text-lg sm:text-xl text-primary px-1 sm:px-2">TicketsV2</a>
 
       <!-- Desktop menu - right next to logo -->
       <ul class="menu menu-horizontal px-1 hidden lg:flex">
@@ -32,7 +34,7 @@
               </svg>
               Tickets
             </summary>
-            <ul class="bg-base-100 rounded-box z-10 w-48 p-2 shadow">
+            <ul class="bg-base-100 rounded-box z-50 w-48 p-2 shadow-lg">
               <li><%= link_to "Bode.lv", tickets_bode_path %></li>
               <li><%= link_to "Ryanair", tickets_ryanair_path %></li>
               <li><%= link_to "AirBaltic", tickets_airbaltic_path %></li>
@@ -45,8 +47,8 @@
       </ul>
     </div>
 
-    <div class="flex items-center gap-2">
-      <%= link_to profile_path, class: "text-sm hidden sm:inline hover:underline" do %>
+    <div class="flex items-center gap-1 sm:gap-2">
+      <%= link_to profile_path, class: "text-sm hidden sm:inline hover:underline truncate max-w-[150px] md:max-w-none" do %>
         <%= current_user.email %>
       <% end %>
       <%= button_to "Logout", logout_path, method: :delete, class: "btn btn-primary btn-sm" %>

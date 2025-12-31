@@ -1,12 +1,12 @@
-<div class="min-h-screen flex items-center justify-center">
-  <div class="card bg-base-100 w-full max-w-md shadow-xl">
-    <div class="card-body">
-      <h2 class="card-title text-2xl font-bold justify-center">Sign in to TicketsV2</h2>
-      <p class="text-center text-base-content/70">Enter your email to continue</p>
+<div class="min-h-screen flex items-center justify-center px-4 py-8">
+  <div class="card bg-base-100 w-full max-w-sm sm:max-w-md shadow-xl">
+    <div class="card-body p-6 sm:p-8">
+      <h2 class="card-title text-xl sm:text-2xl font-bold justify-center">Sign in to TicketsV2</h2>
+      <p class="text-center text-sm sm:text-base text-base-content/70">Enter your email to continue</p>
 
       <% if flash[:alert] %>
-        <div role="alert" class="alert alert-error">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 shrink-0 stroke-current" fill="none" viewBox="0 0 24 24">
+        <div role="alert" class="alert alert-error text-sm">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 sm:h-6 sm:w-6 shrink-0 stroke-current" fill="none" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
           <span><%= flash[:alert] %></span>
@@ -14,8 +14,8 @@
       <% end %>
 
       <% if flash[:notice] %>
-        <div role="alert" class="alert alert-success">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 shrink-0 stroke-current" fill="none" viewBox="0 0 24 24">
+        <div role="alert" class="alert alert-success text-sm">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 sm:h-6 sm:w-6 shrink-0 stroke-current" fill="none" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
           <span><%= flash[:notice] %></span>
