@@ -36,7 +36,7 @@ module Turkish
 
       Rails.logger.info "[Turkish::FlightMatrixService] Fetching flight matrix for #{@destination_code}, #{@date_out} - #{@date_in}"
 
-      response = make_direct_request
+      response = fetch_with_flaresolverr
 
       result = parse_matrix_response(response)
 
@@ -47,6 +47,16 @@ module Turkish
       end
 
       result
+    rescue FlaresolverrService::FlaresolverrError => e
+      Rails.logger.error "[Turkish::FlightMatrixService] FlareSolverr error: #{e.message}"
+      # Fallback to direct request in development
+      if Rails.env.development?
+        Rails.logger.info "[Turkish::FlightMatrixService] Falling back to direct request"
+        response = make_direct_request
+        parse_matrix_response(response)
+      else
+        { success: false, error: "FlareSolverr error: #{e.message}" }
+      end
     rescue StandardError => e
       Rails.logger.error "[Turkish::FlightMatrixService] Error: #{e.message}"
       Rails.logger.error e.backtrace.first(10).join("\n")
@@ -54,6 +64,31 @@ module Turkish
     end
 
     private
+
+    def fetch_with_flaresolverr
+      Rails.logger.info "[Turkish::FlightMatrixService] Fetching via FlareSolverr POST to #{FLIGHT_MATRIX_API}"
+
+      flaresolverr = FlaresolverrService.new
+      headers = build_headers
+      flaresolverr.post(FLIGHT_MATRIX_API, build_payload, headers: headers)
+    end
+
+    def build_headers
+      conversation_id = SecureRandom.uuid
+      {
+        "Accept" => "application/json",
+        "Accept-Language" => "en",
+        "Content-Type" => "application/json",
+        "Origin" => "https://www.turkishairlines.com",
+        "Referer" => "https://www.turkishairlines.com/en-int/flights/booking/",
+        "x-country" => "int",
+        "x-platform" => "WEB",
+        "x-clientid" => SecureRandom.uuid,
+        "x-conversationid" => conversation_id,
+        "x-requestid" => SecureRandom.uuid,
+        "x-bfp" => SecureRandom.hex(16)
+      }
+    end
 
     def make_direct_request
       uri = URI(FLIGHT_MATRIX_API)
@@ -64,19 +99,8 @@ module Turkish
       request = Net::HTTP::Post.new(uri.path)
 
       # Set headers to mimic browser request
-      conversation_id = SecureRandom.uuid
-      request["Accept"] = "application/json"
-      request["Accept-Language"] = "en"
-      request["Content-Type"] = "application/json"
-      request["Origin"] = "https://www.turkishairlines.com"
-      request["Referer"] = "https://www.turkishairlines.com/en-int/flights/booking/"
+      build_headers.each { |key, value| request[key] = value }
       request["User-Agent"] = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-      request["x-country"] = "int"
-      request["x-platform"] = "WEB"
-      request["x-clientid"] = SecureRandom.uuid
-      request["x-conversationid"] = conversation_id
-      request["x-requestid"] = SecureRandom.uuid
-      request["x-bfp"] = SecureRandom.hex(16)
 
       request.body = build_payload.to_json
 

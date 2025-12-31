@@ -14,8 +14,18 @@ module Turkish
 
       Rails.logger.info "[Turkish::DestinationsSearchService] Searching for: #{@query}"
 
-      response = make_direct_request
+      response = fetch_with_flaresolverr
       parse_destinations(response)
+    rescue FlaresolverrService::FlaresolverrError => e
+      Rails.logger.error "[Turkish::DestinationsSearchService] FlareSolverr error: #{e.message}"
+      # Fallback to direct request in development
+      if Rails.env.development?
+        Rails.logger.info "[Turkish::DestinationsSearchService] Falling back to direct request"
+        response = make_direct_request
+        parse_destinations(response)
+      else
+        []
+      end
     rescue StandardError => e
       Rails.logger.error "[Turkish::DestinationsSearchService] Error: #{e.message}"
       Rails.logger.error e.backtrace.first(10).join("\n")
@@ -24,12 +34,25 @@ module Turkish
 
     private
 
-    def make_direct_request
+    def fetch_with_flaresolverr
+      url = build_url
+      Rails.logger.info "[Turkish::DestinationsSearchService] Fetching via FlareSolverr: #{url}"
+
+      flaresolverr = FlaresolverrService.new
+      flaresolverr.fetch(url)
+    end
+
+    def build_url
       uri = URI(LOCATIONS_API)
       uri.query = URI.encode_www_form({
         "searchText" => @query,
         "bookerType" => "TICKETING"
       })
+      uri.to_s
+    end
+
+    def make_direct_request
+      uri = URI(build_url)
 
       http = Net::HTTP.new(uri.host, uri.port)
       http.use_ssl = true
@@ -46,7 +69,7 @@ module Turkish
       request["x-country"] = "int"
       request["x-platform"] = "WEB"
 
-      Rails.logger.info "[Turkish::DestinationsSearchService] Making GET to #{uri}"
+      Rails.logger.info "[Turkish::DestinationsSearchService] Making direct GET to #{uri}"
       response = http.request(request)
       Rails.logger.info "[Turkish::DestinationsSearchService] Response: #{response.code} (#{response.body.length} bytes)"
 
