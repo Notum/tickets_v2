@@ -14,18 +14,27 @@ module Turkish
 
       Rails.logger.info "[Turkish::DestinationsSearchService] Searching for: #{@query}"
 
-      response = fetch_with_flaresolverr
-      parse_destinations(response)
-    rescue FlaresolverrService::FlaresolverrError => e
-      Rails.logger.error "[Turkish::DestinationsSearchService] FlareSolverr error: #{e.message}"
-      # Fallback to direct request in development
-      if Rails.env.development?
-        Rails.logger.info "[Turkish::DestinationsSearchService] Falling back to direct request"
+      # Try direct request first (Turkish Airlines API often works without FlareSolverr)
+      response = nil
+      begin
+        Rails.logger.info "[Turkish::DestinationsSearchService] Trying direct request first"
         response = make_direct_request
-        parse_destinations(response)
-      else
-        []
+
+        unless response.is_a?(Hash) && response["success"] == true
+          raise "Direct request returned invalid response"
+        end
+        Rails.logger.info "[Turkish::DestinationsSearchService] Direct request succeeded"
+      rescue StandardError => e
+        Rails.logger.warn "[Turkish::DestinationsSearchService] Direct request failed: #{e.message}, trying FlareSolverr"
+        begin
+          response = fetch_with_flaresolverr
+        rescue FlaresolverrService::FlaresolverrError => fe
+          Rails.logger.error "[Turkish::DestinationsSearchService] FlareSolverr also failed: #{fe.message}"
+          return []
+        end
       end
+
+      parse_destinations(response)
     rescue StandardError => e
       Rails.logger.error "[Turkish::DestinationsSearchService] Error: #{e.message}"
       Rails.logger.error e.backtrace.first(10).join("\n")

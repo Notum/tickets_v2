@@ -19,19 +19,25 @@ module Turkish
 
       payload = build_payload
 
+      # Try direct request first (Turkish Airlines API often works without FlareSolverr)
       begin
-        response = fetch_with_flaresolverr(payload)
-      rescue FlaresolverrService::FlaresolverrError => e
-        Rails.logger.error "[Turkish::PriceFetchService] FlareSolverr error: #{e.message}"
-        # Fallback to direct request in development
-        if Rails.env.development?
-          Rails.logger.info "[Turkish::PriceFetchService] Falling back to direct request"
-          response = make_direct_request(payload)
+        Rails.logger.info "[Turkish::PriceFetchService] Trying direct request first"
+        response = make_direct_request(payload)
+
+        # Check if we got a valid response
+        if response.is_a?(Hash) && response["success"] == true
+          Rails.logger.info "[Turkish::PriceFetchService] Direct request succeeded"
         else
-          return update_with_error("FlareSolverr error: #{e.message}")
+          raise "Direct request returned invalid response"
         end
       rescue StandardError => e
-        return update_with_error("Request error: #{e.message}")
+        Rails.logger.warn "[Turkish::PriceFetchService] Direct request failed: #{e.message}, trying FlareSolverr"
+        begin
+          response = fetch_with_flaresolverr(payload)
+        rescue FlaresolverrService::FlaresolverrError => fe
+          Rails.logger.error "[Turkish::PriceFetchService] FlareSolverr also failed: #{fe.message}"
+          return update_with_error("Both direct and FlareSolverr requests failed")
+        end
       end
 
       # Save raw response for debugging (truncate to avoid huge data)

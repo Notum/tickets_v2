@@ -36,7 +36,25 @@ module Turkish
 
       Rails.logger.info "[Turkish::FlightMatrixService] Fetching flight matrix for #{@destination_code}, #{@date_out} - #{@date_in}"
 
-      response = fetch_with_flaresolverr
+      # Try direct request first (Turkish Airlines API often works without FlareSolverr)
+      response = nil
+      begin
+        Rails.logger.info "[Turkish::FlightMatrixService] Trying direct request first"
+        response = make_direct_request
+
+        unless response.is_a?(Hash) && response["success"] == true
+          raise "Direct request returned invalid response"
+        end
+        Rails.logger.info "[Turkish::FlightMatrixService] Direct request succeeded"
+      rescue StandardError => e
+        Rails.logger.warn "[Turkish::FlightMatrixService] Direct request failed: #{e.message}, trying FlareSolverr"
+        begin
+          response = fetch_with_flaresolverr
+        rescue FlaresolverrService::FlaresolverrError => fe
+          Rails.logger.error "[Turkish::FlightMatrixService] FlareSolverr also failed: #{fe.message}"
+          return { success: false, error: "Both direct and FlareSolverr requests failed" }
+        end
+      end
 
       result = parse_matrix_response(response)
 
@@ -47,16 +65,6 @@ module Turkish
       end
 
       result
-    rescue FlaresolverrService::FlaresolverrError => e
-      Rails.logger.error "[Turkish::FlightMatrixService] FlareSolverr error: #{e.message}"
-      # Fallback to direct request in development
-      if Rails.env.development?
-        Rails.logger.info "[Turkish::FlightMatrixService] Falling back to direct request"
-        response = make_direct_request
-        parse_matrix_response(response)
-      else
-        { success: false, error: "FlareSolverr error: #{e.message}" }
-      end
     rescue StandardError => e
       Rails.logger.error "[Turkish::FlightMatrixService] Error: #{e.message}"
       Rails.logger.error e.backtrace.first(10).join("\n")
