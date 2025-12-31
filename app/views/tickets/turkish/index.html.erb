@@ -113,7 +113,20 @@
             <div class="py-3 flex items-center gap-4" id="<%= dom_id(search) %>">
               <!-- Route -->
               <div class="font-medium whitespace-nowrap w-52 shrink-0">
-                <div>RIX <span class="text-base-content/50">→</span> IST <span class="text-base-content/50">→</span> <%= search.destination_code %></div>
+                <div class="flex items-center gap-1">
+                  <span>RIX</span>
+                  <span class="text-base-content/50">→</span>
+                  <span class="text-base-content/50 text-xs">IST</span>
+                  <span class="text-base-content/50">→</span>
+                  <span><%= search.destination_code %></span>
+                </div>
+                <div class="flex items-center gap-1 text-base-content/50">
+                  <span><%= search.destination_code %></span>
+                  <span>→</span>
+                  <span class="text-xs">IST</span>
+                  <span>→</span>
+                  <span>RIX</span>
+                </div>
                 <div class="text-xs text-base-content/50 font-normal"><%= search.destination_name %></div>
               </div>
 
