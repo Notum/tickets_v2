@@ -29,12 +29,12 @@ module Norwegian
 
       flaresolverr = FlaresolverrService.new
 
-      # Fetch fare calendar for the next ~3 months from date_out
+      # Fetch fare calendar for the next ~6 months from date_out
       all_dates = []
       current_month = @date_out.beginning_of_month
 
-      # Fetch 3 months of data
-      3.times do |i|
+      # Fetch 6 months of data
+      6.times do |i|
         month_start = current_month + i.months
         api_url = build_calendar_url(month_start)
 

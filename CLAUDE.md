@@ -83,6 +83,7 @@ Recurring jobs configured in `config/recurring.yml` (Solid Queue):
 - `Sync{Airline}DestinationsJob` / `SyncRyanairRoutesJob` - Hourly destination sync
 - `RefreshAll{Airline}PricesJob` - Hourly price refresh for all tracked flights
 - `Fetch{Airline}PriceJob` - Single flight price fetch
+- `CleanupExpiredFlightSearchesJob` - Daily cleanup of past flight searches
 
 ### Controllers
 - `Tickets::{Airline}Controller` - CRUD for user's flight searches per airline
