@@ -116,23 +116,28 @@ All price fetch services return a hash with `{ success: true/false, ... }`:
 
 ### External Dependencies
 
-#### FlareSolverr (Cloudflare Bypass)
-Norwegian and FlyDubai APIs are protected by Cloudflare bot detection. We use [FlareSolverr](https://github.com/FlareSolverr/FlareSolverr) - a proxy server running in Docker that uses a real browser to solve Cloudflare challenges.
+#### Byparr / FlareSolverr (Cloudflare Bypass)
+Norwegian and FlyDubai APIs are protected by Cloudflare bot detection. We use [Byparr](https://github.com/ThePhaseless/Byparr) - a FlareSolverr-compatible proxy that uses Camoufox (Firefox-based) to solve Cloudflare challenges. Byparr is more reliable than FlareSolverr for our use case.
 
-**Running FlareSolverr locally:**
+**Running locally (development):**
 ```bash
-docker run -d --name flaresolverr -p 8191:8191 ghcr.io/flaresolverr/flaresolverr:latest
+docker run -d --name flaresolverr -p 8191:8191 ghcr.io/thephaseless/byparr:latest
 ```
+
+**Running in production:** See "Production Docker Setup" section below.
 
 **Configuration:**
 - `FLARESOLVERR_URL` env var (default: `http://localhost:8191/v1`)
+- In production: `http://tickets_v2-flaresolverr:8191/v1` (Docker internal network)
 - Timeout: 60 seconds per request
 
 **Usage in code:**
-- `FlaresolverrService` (`app/services/flaresolverr_service.rb`) wraps FlareSolverr API
+- `FlaresolverrService` (`app/services/flaresolverr_service.rb`) wraps the API
 - Used by Norwegian and FlyDubai services (date services, price fetch)
-- `FlaresolverrService.available?` - check if FlareSolverr is running
+- `FlaresolverrService.available?` - check if service is running
 - Raises `FlaresolverrService::FlaresolverrError` on failures
+
+**Note:** The service is named `FlaresolverrService` for historical reasons, but Byparr uses the same API.
 
 #### FlyDubai (RIX-DXB Route)
 FlyDubai has a hardcoded single route (Riga to Dubai) with no destinations table:
@@ -166,3 +171,55 @@ Turkish Airlines flights are searched via a flight matrix API with 1-stop connec
 - Our app is running locally (DEV) on port 4000
 - If server restart is needed - ask user to do it. Do not try to initiate server restart/start by yourself
 - All flights are from Riga (RIX) - this is hardcoded in services
+
+## Production Docker Setup
+
+### Docker Network
+All containers run on the `kamal` Docker network for inter-container communication.
+
+### Container Names
+| Container | Image | Purpose |
+|-----------|-------|---------|
+| `tickets_v2-web-{commit_hash}` | `ghcr.io/notum/tickets_v2:{hash}` | Rails app (deployed via Kamal) |
+| `tickets_v2-flaresolverr` | `ghcr.io/thephaseless/byparr:latest` | Cloudflare bypass proxy |
+| `kamal-proxy` | `basecamp/kamal-proxy:v0.9.0` | HTTP proxy (ports 80, 443) |
+
+### Starting Byparr in Production
+```bash
+docker run -d \
+  --name tickets_v2-flaresolverr \
+  --network kamal \
+  -p 8191:8191 \
+  ghcr.io/thephaseless/byparr:latest
+```
+
+### Restarting Byparr
+```bash
+docker stop tickets_v2-flaresolverr
+docker rm tickets_v2-flaresolverr
+docker run -d \
+  --name tickets_v2-flaresolverr \
+  --network kamal \
+  -p 8191:8191 \
+  ghcr.io/thephaseless/byparr:latest
+```
+
+### Useful Docker Commands
+```bash
+# Check running containers
+docker ps
+
+# View Byparr logs
+docker logs tickets_v2-flaresolverr --tail 100
+
+# Access Rails console in production
+docker exec -it tickets_v2-web-{hash} bin/rails console
+
+# Test Byparr is working
+curl -X POST http://localhost:8191/v1 \
+  -H "Content-Type: application/json" \
+  -d '{"cmd": "request.get", "url": "https://www.norwegian.com", "maxTimeout": 60000}'
+```
+
+### Environment Variables (Production)
+- `FLARESOLVERR_URL`: `http://tickets_v2-flaresolverr:8191/v1` - Uses Docker internal network hostname
