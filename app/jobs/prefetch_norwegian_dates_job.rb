@@ -4,50 +4,52 @@ class PrefetchNorwegianDatesJob < ApplicationJob
   # Cache expiration: 1 week (job runs weekly on its own schedule)
   CACHE_EXPIRY = 1.week
 
-  # Number of concurrent threads for fetching destinations
-  # Keep low (2) since each thread maintains a FlareSolverr browser session
-  THREAD_POOL_SIZE = 2
+  # Timeout per destination (5 minutes) - prevents job from hanging
+  DESTINATION_TIMEOUT = 5.minutes.to_i
 
   def perform
     Rails.logger.info "[PrefetchNorwegianDatesJob] Starting to prefetch dates for all Norwegian destinations..."
 
     destinations = NorwegianDestination.active.to_a
     total = destinations.count
+    prefetched = 0
+    failed = 0
 
-    # Thread-safe counters
-    prefetched = Concurrent::AtomicFixnum.new(0)
-    failed = Concurrent::AtomicFixnum.new(0)
-    processed = Concurrent::AtomicFixnum.new(0)
+    # Process destinations sequentially to avoid overwhelming FlareSolverr
+    destinations.each_with_index do |destination, index|
+      Rails.logger.info "[PrefetchNorwegianDatesJob] Prefetching dates for #{destination.code} (#{index + 1}/#{total})"
 
-    # Create a thread pool with limited concurrency
-    pool = Concurrent::FixedThreadPool.new(THREAD_POOL_SIZE)
+      begin
+        # Timeout wrapper to prevent hanging on stuck requests
+        result = Timeout.timeout(DESTINATION_TIMEOUT) do
+          fetch_and_cache_destination(destination)
+        end
 
-    # Submit tasks for each destination
-    futures = destinations.map do |destination|
-      Concurrent::Future.execute(executor: pool) do
-        fetch_and_cache_destination(destination, prefetched, failed, processed, total)
+        if result
+          prefetched += 1
+        else
+          failed += 1
+        end
+      rescue Timeout::Error
+        failed += 1
+        Rails.logger.error "[PrefetchNorwegianDatesJob] Timeout fetching dates for #{destination.code} (exceeded #{DESTINATION_TIMEOUT}s)"
+      rescue StandardError => e
+        failed += 1
+        Rails.logger.error "[PrefetchNorwegianDatesJob] Error fetching dates for #{destination.code}: #{e.message}"
       end
+
+      # Small delay between destinations to be polite to FlareSolverr
+      sleep 2
     end
 
-    # Wait for all tasks to complete
-    futures.each(&:wait)
+    Rails.logger.info "[PrefetchNorwegianDatesJob] Completed: #{prefetched} prefetched, #{failed} failed out of #{total}"
 
-    # Shutdown the thread pool
-    pool.shutdown
-    pool.wait_for_termination
-
-    Rails.logger.info "[PrefetchNorwegianDatesJob] Completed: #{prefetched.value} prefetched, #{failed.value} failed out of #{total}"
-
-    { prefetched: prefetched.value, failed: failed.value, total: total }
+    { prefetched: prefetched, failed: failed, total: total }
   end
 
   private
 
-  def fetch_and_cache_destination(destination, prefetched, failed, processed, total)
-    current = processed.increment
-    Rails.logger.info "[PrefetchNorwegianDatesJob] Prefetching dates for #{destination.code} (#{current}/#{total})"
-
-    # Each thread gets its own FlareSolverr instance
+  def fetch_and_cache_destination(destination)
     flaresolverr = FlaresolverrService.new
     result = fetch_all_dates(destination.code, flaresolverr)
 
@@ -66,58 +68,40 @@ class PrefetchNorwegianDatesJob < ApplicationJob
     end
 
     if result[:outbound].any? || result[:inbound].any?
-      prefetched.increment
+      true
     else
-      failed.increment
       Rails.logger.warn "[PrefetchNorwegianDatesJob] No dates found for #{destination.code}"
+      false
     end
-  rescue StandardError => e
-    failed.increment
-    Rails.logger.error "[PrefetchNorwegianDatesJob] Error fetching dates for #{destination.code}: #{e.message}"
   end
 
   def fetch_all_dates(destination_code, flaresolverr)
     all_outbound = []
     all_inbound = []
     current_date = Date.current
-    session_id = nil
 
-    begin
-      # Create a session to maintain cookies across all month requests
-      session_id = flaresolverr.create_session
-      Rails.logger.info "[PrefetchNorwegianDatesJob] Created session #{session_id} for #{destination_code}"
+    # Fetch 13 months of data to ensure full year coverage from today
+    13.times do |i|
+      month_start = current_date.beginning_of_month + i.months
+      api_url = build_calendar_url(destination_code, month_start)
 
-      # First request establishes the session/cookies
-      first_url = build_calendar_url(destination_code, current_date.beginning_of_month)
-      flaresolverr.get_with_session(first_url, session_id)
-      sleep 1
+      response = fetch_with_retry(flaresolverr, api_url, destination_code)
 
-      # Fetch 13 months of data to ensure full year coverage from today
-      13.times do |i|
-        month_start = current_date.beginning_of_month + i.months
-        api_url = build_calendar_url(destination_code, month_start)
-
-        response = fetch_with_retry(flaresolverr, api_url, session_id, destination_code)
-
-        if response.is_a?(Hash)
-          # Extract outbound dates
-          if response["outbound"] && response["outbound"]["days"]
-            dates = parse_dates(response["outbound"]["days"])
-            all_outbound.concat(dates)
-          end
-
-          # Extract inbound dates from the SAME response
-          if response["inbound"] && response["inbound"]["days"]
-            dates = parse_dates(response["inbound"]["days"])
-            all_inbound.concat(dates)
-          end
+      if response.is_a?(Hash)
+        # Extract outbound dates
+        if response["outbound"] && response["outbound"]["days"]
+          dates = parse_dates(response["outbound"]["days"])
+          all_outbound.concat(dates)
         end
 
-        sleep 1 # Be polite between requests
+        # Extract inbound dates from the SAME response
+        if response["inbound"] && response["inbound"]["days"]
+          dates = parse_dates(response["inbound"]["days"])
+          all_inbound.concat(dates)
+        end
       end
-    ensure
-      # Always destroy the session
-      flaresolverr.destroy_session(session_id) if session_id
+
+      sleep 1 # Be polite between requests
     end
 
     # Filter and deduplicate
@@ -127,26 +111,23 @@ class PrefetchNorwegianDatesJob < ApplicationJob
     }
   end
 
-  def fetch_with_retry(flaresolverr, url, session_id, destination_code, max_retries: 2)
+  def fetch_with_retry(flaresolverr, url, destination_code, max_retries: 1)
     retries = 0
 
     loop do
       begin
-        response = flaresolverr.get_with_session(url, session_id)
+        response = flaresolverr.fetch(url)
 
-        # Check if we got a valid response (Hash with data) or a small invalid response
+        # Check if we got a valid response (Hash with data)
         if response.is_a?(Hash) && (response["outbound"] || response["inbound"])
           return response
+        elsif response.is_a?(Hash)
+          # Got JSON but no flight data - this is valid (no flights for this month)
+          return response
         elsif response.is_a?(String) && response.length < 100
-          # Small response likely means challenge failed or no data
-          Rails.logger.warn "[PrefetchNorwegianDatesJob] Small response (#{response.length} bytes) for #{destination_code}: #{response.first(100)}"
-
-          if retries < max_retries
-            retries += 1
-            Rails.logger.info "[PrefetchNorwegianDatesJob] Retrying #{url} (attempt #{retries + 1}/#{max_retries + 1})"
-            sleep 2
-            next
-          end
+          # Small non-JSON response likely means no data for this month
+          Rails.logger.debug "[PrefetchNorwegianDatesJob] No data for #{destination_code} month: #{response.first(50)}"
+          return nil
         end
 
         return response
@@ -156,7 +137,7 @@ class PrefetchNorwegianDatesJob < ApplicationJob
         if retries < max_retries
           retries += 1
           Rails.logger.info "[PrefetchNorwegianDatesJob] Retrying after error (attempt #{retries + 1}/#{max_retries + 1})"
-          sleep 2
+          sleep 3
           next
         end
 
