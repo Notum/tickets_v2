@@ -8,10 +8,7 @@ class SyncNorwegianDestinationsJob < ApplicationJob
 
     if result[:success]
       Rails.logger.info "[SyncNorwegianDestinationsJob] Sync completed successfully"
-
-      # Prefetch dates for all destinations so users get instant responses
-      Rails.logger.info "[SyncNorwegianDestinationsJob] Triggering dates prefetch job..."
-      PrefetchNorwegianDatesJob.perform_later
+      # Note: dates are prefetched weekly by PrefetchNorwegianDatesJob on its own schedule
     else
       Rails.logger.error "[SyncNorwegianDestinationsJob] Sync failed: #{result[:error]}"
     end

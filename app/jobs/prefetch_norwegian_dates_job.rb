@@ -1,8 +1,8 @@
 class PrefetchNorwegianDatesJob < ApplicationJob
   queue_as :default
 
-  # Cache expiration: 13 hours (sync runs twice daily at 6:00 and 18:00)
-  CACHE_EXPIRY = 13.hours
+  # Cache expiration: 1 week (job runs weekly on its own schedule)
+  CACHE_EXPIRY = 1.week
 
   def perform
     Rails.logger.info "[PrefetchNorwegianDatesJob] Starting to prefetch dates for all Norwegian destinations..."
@@ -61,8 +61,9 @@ class PrefetchNorwegianDatesJob < ApplicationJob
     all_inbound = []
     current_date = Date.current
 
-    # Fetch 6 months of data (one month at a time)
-    6.times do |i|
+    # Fetch 13 months of data to ensure full year coverage from today
+    # (e.g., if today is Jan 16, we need Jan-Jan next year to cover 12 months ahead)
+    13.times do |i|
       month_start = current_date.beginning_of_month + i.months
       api_url = build_calendar_url(destination_code, month_start)
 
