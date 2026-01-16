@@ -4,7 +4,7 @@ require "json"
 module Norwegian
   class OutboundDatesService
     FARE_CALENDAR_API = "https://www.norwegian.com/api/fare-calendar/calendar".freeze
-    CACHE_EXPIRY = 13.hours
+    CACHE_EXPIRY = 1.week
 
     def self.cache_key(destination_code)
       "norwegian_outbound_dates_#{destination_code}"

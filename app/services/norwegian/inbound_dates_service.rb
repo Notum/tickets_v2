@@ -4,7 +4,7 @@ require "json"
 module Norwegian
   class InboundDatesService
     FARE_CALENDAR_API = "https://www.norwegian.com/api/fare-calendar/calendar".freeze
-    CACHE_EXPIRY = 13.hours
+    CACHE_EXPIRY = 1.week
 
     def self.cache_key(destination_code)
       "norwegian_inbound_dates_#{destination_code}"
@@ -29,12 +29,12 @@ module Norwegian
 
       flaresolverr = FlaresolverrService.new
 
-      # Fetch fare calendar for the next ~6 months from date_out
+      # Fetch fare calendar for the next ~12 months from date_out
       all_dates = []
       current_month = @date_out.beginning_of_month
 
-      # Fetch 6 months of data
-      6.times do |i|
+      # Fetch 12 months of data
+      12.times do |i|
         month_start = current_month + i.months
         api_url = build_calendar_url(month_start)
 
