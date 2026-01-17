@@ -72,6 +72,17 @@ refresh_turkish_prices:
   queue: default
   schedule: every hour at minute 0
 
+# Refresh Booking.com hotel prices twice daily (8:00 and 20:00 Riga time)
+refresh_booking_prices_morning:
+  class: RefreshAllBookingPricesJob
+  queue: default
+  schedule: every day at 8:00 Europe/Riga
+
+refresh_booking_prices_evening:
+  class: RefreshAllBookingPricesJob
+  queue: default
+  schedule: every day at 20:00 Europe/Riga
+
 # Cleanup expired flight searches daily at 1:00 AM Riga time
 cleanup_expired_flights:
   class: CleanupExpiredFlightSearchesJob
@@ -147,6 +158,17 @@ production:
   clear_solid_queue_finished_jobs:
     command: "SolidQueue::Job.clear_finished_in_batches(sleep_between_batches: 0.3)"
     schedule: every hour at minute 12
+
+  # Refresh Booking.com hotel prices twice daily (8:00 and 20:00 Riga time)
+  refresh_booking_prices_morning:
+    class: RefreshAllBookingPricesJob
+    queue: default
+    schedule: every day at 8:00 Europe/Riga
+
+  refresh_booking_prices_evening:
+    class: RefreshAllBookingPricesJob
+    queue: default
+    schedule: every day at 20:00 Europe/Riga
 
   # Cleanup expired flight searches daily at 1:00 AM Riga time
   cleanup_expired_flights:

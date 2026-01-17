@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_12_29_145839) do
+ActiveRecord::Schema[8.0].define(version: 2026_01_17_145121) do
   create_table "airbaltic_destinations", force: :cascade do |t|
     t.string "code", null: false
     t.string "name", null: false
@@ -95,6 +95,45 @@ ActiveRecord::Schema[8.0].define(version: 2025_12_29_145839) do
     t.datetime "updated_at", null: false
     t.index ["bode_flight_search_id", "recorded_at"], name: "idx_bode_price_history_search_recorded"
     t.index ["bode_flight_search_id"], name: "index_bode_price_histories_on_bode_flight_search_id"
+  end
+
+  create_table "booking_price_histories", force: :cascade do |t|
+    t.integer "booking_search_id", null: false
+    t.decimal "price", precision: 10, scale: 2
+    t.decimal "price_per_night", precision: 10, scale: 2
+    t.string "room_name"
+    t.datetime "recorded_at", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["booking_search_id", "recorded_at"], name: "idx_booking_price_history_search_recorded"
+    t.index ["booking_search_id"], name: "index_booking_price_histories_on_booking_search_id"
+  end
+
+  create_table "booking_searches", force: :cascade do |t|
+    t.integer "user_id", null: false
+    t.string "city_name", null: false
+    t.string "country_name"
+    t.string "hotel_id", null: false
+    t.string "hotel_name", null: false
+    t.string "hotel_url"
+    t.date "check_in", null: false
+    t.date "check_out", null: false
+    t.integer "adults", default: 2, null: false
+    t.integer "rooms", default: 1, null: false
+    t.string "currency", default: "EUR", null: false
+    t.string "room_name"
+    t.decimal "price", precision: 10, scale: 2
+    t.decimal "price_per_night", precision: 10, scale: 2
+    t.string "status", default: "pending"
+    t.text "api_response"
+    t.datetime "priced_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.string "room_id"
+    t.string "block_id"
+    t.index ["hotel_id"], name: "index_booking_searches_on_hotel_id"
+    t.index ["user_id", "hotel_id", "room_id", "check_in", "check_out"], name: "idx_booking_unique_search", unique: true
+    t.index ["user_id"], name: "index_booking_searches_on_user_id"
   end
 
   create_table "flydubai_flight_searches", force: :cascade do |t|
@@ -265,6 +304,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_12_29_145839) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.decimal "price_notification_threshold", precision: 10, scale: 2, default: "5.0", null: false
+    t.string "currency", default: "EUR", null: false
     t.index ["email"], name: "index_users_on_email", unique: true
   end
 
@@ -274,6 +314,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_12_29_145839) do
   add_foreign_key "bode_flight_searches", "bode_destinations"
   add_foreign_key "bode_flight_searches", "users"
   add_foreign_key "bode_price_histories", "bode_flight_searches"
+  add_foreign_key "booking_price_histories", "booking_searches"
+  add_foreign_key "booking_searches", "users"
   add_foreign_key "flydubai_flight_searches", "users"
   add_foreign_key "flydubai_price_histories", "flydubai_flight_searches"
   add_foreign_key "norwegian_flight_searches", "norwegian_destinations"

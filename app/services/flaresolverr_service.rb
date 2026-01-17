@@ -201,7 +201,8 @@ class FlaresolverrService
   def self.available?
     uri = URI(FLARESOLVERR_URL.sub("/v1", ""))
     response = Net::HTTP.get_response(uri)
-    response.is_a?(Net::HTTPSuccess)
+    # Accept success (2xx) or redirect (3xx) as "available"
+    response.is_a?(Net::HTTPSuccess) || response.is_a?(Net::HTTPRedirection)
   rescue StandardError
     false
   end

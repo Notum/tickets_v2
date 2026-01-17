@@ -14,7 +14,7 @@
 
     <div class="divider my-2 sm:my-4"></div>
 
-    <h2 class="text-base sm:text-lg font-semibold mb-3 sm:mb-4">Notification Settings</h2>
+    <h2 class="text-base sm:text-lg font-semibold mb-3 sm:mb-4">Preferences</h2>
 
     <%= form_with model: @user, url: profile_path, method: :patch, class: "space-y-4" do |f| %>
       <% if @user.errors.any? %>
@@ -28,8 +28,18 @@
       <% end %>
 
       <div class="form-control w-full">
+        <%= f.label :currency, class: "label" do %>
+          <span class="label-text text-sm">Currency for Booking.com</span>
+        <% end %>
+        <%= f.select :currency, User::CURRENCIES.map { |c| [c, c] }, {}, class: "select select-bordered w-full sm:w-48" %>
+        <label class="label">
+          <span class="label-text-alt text-xs sm:text-sm text-base-content/60">Currency used for hotel price tracking on Booking.com.</span>
+        </label>
+      </div>
+
+      <div class="form-control w-full">
         <%= f.label :price_notification_threshold, class: "label" do %>
-          <span class="label-text text-sm">Price Drop Notification Threshold (EUR)</span>
+          <span class="label-text text-sm">Price Drop Notification Threshold</span>
         <% end %>
         <div class="join w-full sm:w-auto">
           <%= f.number_field :price_notification_threshold,
@@ -37,10 +47,10 @@
               min: 0,
               class: "input input-bordered join-item w-full sm:w-48",
               placeholder: "5.00" %>
-          <span class="btn btn-neutral join-item no-animation pointer-events-none">EUR</span>
+          <span class="btn btn-neutral join-item no-animation pointer-events-none"><%= @user.currency %></span>
         </div>
         <label class="label">
-          <span class="label-text-alt text-xs sm:text-sm text-base-content/60">You will receive email notifications when a flight price drops by at least this amount.</span>
+          <span class="label-text-alt text-xs sm:text-sm text-base-content/60">You will receive email notifications when a price drops by at least this amount.</span>
         </label>
       </div>
 

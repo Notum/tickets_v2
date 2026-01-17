@@ -16,6 +16,6 @@ class ProfilesController < ApplicationController
   private
 
   def profile_params
-    params.require(:user).permit(:price_notification_threshold)
+    params.require(:user).permit(:price_notification_threshold, :currency)
   end
 end

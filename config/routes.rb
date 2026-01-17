@@ -47,6 +47,15 @@ Rails.application.routes.draw do
     post "turkish/:id/refresh_price", to: "tickets/turkish#refresh_price", as: :turkish_refresh_price
   end
 
+  # Accommodation
+  scope :accommodation, as: :accommodation do
+    # Booking.com Hotels
+    get :booking, to: "accommodation/booking#index"
+    post :booking, to: "accommodation/booking#create"
+    delete "booking/:id", to: "accommodation/booking#destroy", as: :booking_delete
+    post "booking/:id/refresh_price", to: "accommodation/booking#refresh_price", as: :booking_refresh_price
+  end
+
   # API endpoints (AJAX)
   namespace :api do
     # Ryanair
@@ -76,6 +85,10 @@ Rails.application.routes.draw do
     # Turkish Airlines
     get "turkish/destinations", to: "turkish#destinations"
     post "turkish/flight_matrix", to: "turkish#flight_matrix"
+
+    # Booking.com
+    get "booking/search_hotels", to: "booking#search_hotels"
+    get "booking/fetch_rooms", to: "booking#fetch_rooms"
   end
 
   # Reveal health status on /up that returns 200 if the app boots with no exceptions, otherwise 500.
