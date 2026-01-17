@@ -1,15 +1,22 @@
 BOOKING.COM PRICE DROP ALERT
+============================
 
-Hi <%= @user.email %>, great news! The following hotel prices have dropped:
+Hi <%= @user.email %>,
+
+Great news! The following hotel prices have dropped:
 
 <% @price_drops.each do |drop| %>
 <% currency_symbol = drop[:currency] == "USD" ? "$" : "€" %>
 <%= drop[:hotel_name] %> (<%= drop[:city_name] %>)
-Dates: <%= drop[:check_in].strftime("%d %b") %> - <%= drop[:check_out].strftime("%d %b %Y") %>
-Price: <%= currency_symbol %><%= number_with_precision(drop[:previous_price], precision: 2) %> → <%= currency_symbol %><%= number_with_precision(drop[:current_price], precision: 2) %>
+<% if drop[:room_name].present? %>Room: <%= drop[:room_name] %>
+<% end %>Dates: <%= drop[:check_in].strftime("%d %b") %> - <%= drop[:check_out].strftime("%d %b %Y") %>
+Previous Price: <%= currency_symbol %><%= number_with_precision(drop[:previous_price], precision: 2) %>
+Current Price: <%= currency_symbol %><%= number_with_precision(drop[:current_price], precision: 2) %>
 Savings: <%= currency_symbol %><%= number_with_precision(drop[:savings], precision: 2) %>
 
 <% end %>
 ---
-You receive alerts when prices drop by more than <%= @user.currency == "USD" ? "$" : "€" %><%= number_with_precision(@user.price_notification_threshold, precision: 2) %>
+
+You are receiving this email because the price dropped by more than <%= @user.currency == "USD" ? "$" : "€" %><%= number_with_precision(@user.price_notification_threshold, precision: 2) %> (your notification threshold).
+
 Tickets@Petrucho.me
