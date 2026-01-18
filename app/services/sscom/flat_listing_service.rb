@@ -9,6 +9,8 @@ module Sscom
       "exchange" => "exchange"
     }.freeze
 
+    MAX_PAGES = 20 # Safety limit to avoid infinite loops
+
     def initialize(region: nil, city: nil, deal_type: "sell", filters: {})
       @region = region
       @city = city
@@ -23,25 +25,55 @@ module Sscom
         return { success: false, error: "Region is required" }
       end
 
-      url = build_listing_url
-      Rails.logger.info "[Sscom::FlatListingService] URL: #{url}"
+      all_ads = []
+      base_url = build_listing_url
 
-      html = fetch_page(url)
+      # Fetch first page
+      Rails.logger.info "[Sscom::FlatListingService] Fetching page 1: #{base_url}"
+      html = fetch_page(base_url)
       return { success: false, error: "Failed to fetch listings page" } unless html
 
       doc = parse_html(html)
       return { success: false, error: "Failed to parse HTML" } unless doc
 
       ads = parse_listings(doc)
-      Rails.logger.info "[Sscom::FlatListingService] Found #{ads.count} flat ads"
+      all_ads.concat(ads)
+      Rails.logger.info "[Sscom::FlatListingService] Page 1: found #{ads.count} ads"
 
-      saved_count = save_ads(ads)
+      # Check for pagination and fetch remaining pages
+      total_pages = detect_total_pages(doc)
+      Rails.logger.info "[Sscom::FlatListingService] Total pages detected: #{total_pages}"
+
+      if total_pages > 1
+        (2..total_pages).each do |page_num|
+          page_url = build_page_url(base_url, page_num)
+          Rails.logger.info "[Sscom::FlatListingService] Fetching page #{page_num}: #{page_url}"
+
+          html = fetch_page(page_url)
+          next unless html
+
+          doc = parse_html(html)
+          next unless doc
+
+          page_ads = parse_listings(doc)
+          all_ads.concat(page_ads)
+          Rails.logger.info "[Sscom::FlatListingService] Page #{page_num}: found #{page_ads.count} ads"
+
+          # Small delay to be nice to the server
+          sleep(0.5)
+        end
+      end
+
+      Rails.logger.info "[Sscom::FlatListingService] Total ads found across all pages: #{all_ads.count}"
+
+      saved_count = save_ads(all_ads)
 
       {
         success: true,
-        total: ads.count,
+        total: all_ads.count,
         saved: saved_count,
-        ads: ads
+        pages: total_pages,
+        ads: all_ads
       }
     rescue StandardError => e
       Rails.logger.error "[Sscom::FlatListingService] Error: #{e.message}"
@@ -50,6 +82,41 @@ module Sscom
     end
 
     private
+
+    def detect_total_pages(doc)
+      # SS.COM pagination uses links with class "navi"
+      # Example: <a class="navi" href="page2.html">2</a>
+      page_links = doc.css('a.navi')
+
+      max_page = 1
+      page_links.each do |link|
+        text = link.text.strip
+        # Only consider numeric page links (not "Предыдущие"/"Следующие" text links)
+        if text.match?(/^\d+$/)
+          page_num = text.to_i
+          max_page = page_num if page_num > max_page
+        end
+      end
+
+      # Apply safety limit
+      [max_page, MAX_PAGES].min
+    end
+
+    def build_page_url(base_url, page_num)
+      # SS.COM pagination format: /path/to/listings/page2.html
+      # Base URL ends with "/" or "/?params"
+
+      if base_url.include?("?")
+        # Has query params: /path/sell/?param=value -> /path/sell/page2.html?param=value
+        path, params = base_url.split("?", 2)
+        path = path.chomp("/")
+        "#{path}/page#{page_num}.html?#{params}"
+      else
+        # No query params: /path/sell/ -> /path/sell/page2.html
+        path = base_url.chomp("/")
+        "#{path}/page#{page_num}.html"
+      end
+    end
 
     def build_listing_url
       base = "/lv/real-estate/flats"
