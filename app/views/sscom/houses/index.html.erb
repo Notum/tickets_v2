@@ -1,0 +1,175 @@
+<div class="space-y-4 sm:space-y-6" data-controller="delete-confirm sscom-search" data-sscom-search-type-value="houses">
+  <h1 class="text-xl sm:text-2xl font-bold">SS.COM House Price Tracker</h1>
+
+  <!-- Search Form Card -->
+  <div class="card bg-base-100 shadow-xl">
+    <div class="card-body p-4 sm:p-6">
+      <h2 class="card-title text-base sm:text-lg">Search for Houses</h2>
+
+      <%= form_with url: sscom_houses_search_path, method: :post, data: { sscom_search_target: "form", turbo_frame: "_top" } do |f| %>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-4">
+          <!-- Region -->
+          <div class="form-control">
+            <label class="label" for="region_id">
+              <span class="label-text">Region</span>
+            </label>
+            <select name="region_id" id="region_id"
+                    class="select select-bordered w-full"
+                    data-sscom-search-target="regionSelect"
+                    data-action="change->sscom-search#regionChanged"
+                    required>
+              <option value="">Select region...</option>
+              <% @regions.each do |region| %>
+                <option value="<%= region.id %>" data-slug="<%= region.slug %>"><%= region.name_lv %></option>
+              <% end %>
+            </select>
+          </div>
+
+          <!-- City -->
+          <div class="form-control">
+            <label class="label" for="city_id">
+              <span class="label-text">City/District</span>
+            </label>
+            <select name="city_id" id="city_id"
+                    class="select select-bordered w-full"
+                    data-sscom-search-target="citySelect"
+                    disabled>
+              <option value="">All cities</option>
+            </select>
+          </div>
+
+          <!-- Deal Type -->
+          <div class="form-control">
+            <label class="label" for="deal_type">
+              <span class="label-text">Deal Type</span>
+            </label>
+            <select name="deal_type" id="deal_type" class="select select-bordered w-full">
+              <option value="sell" selected>For Sale</option>
+              <option value="rent_out">For Rent</option>
+              <option value="buy">Want to Buy</option>
+              <option value="rent_want">Want to Rent</option>
+              <option value="exchange">Exchange</option>
+            </select>
+          </div>
+
+          <!-- Rooms -->
+          <div class="form-control">
+            <label class="label">
+              <span class="label-text">Rooms</span>
+            </label>
+            <div class="flex gap-2">
+              <input type="number" name="rooms_min" placeholder="Min"
+                     class="input input-bordered w-full" min="1" max="20">
+              <input type="number" name="rooms_max" placeholder="Max"
+                     class="input input-bordered w-full" min="1" max="20">
+            </div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-4">
+          <!-- Living Area -->
+          <div class="form-control">
+            <label class="label">
+              <span class="label-text">Living Area (m²)</span>
+            </label>
+            <div class="flex gap-2">
+              <input type="number" name="area_min" placeholder="Min"
+                     class="input input-bordered w-full" min="1">
+              <input type="number" name="area_max" placeholder="Max"
+                     class="input input-bordered w-full" min="1">
+            </div>
+          </div>
+
+          <!-- Land Area -->
+          <div class="form-control">
+            <label class="label">
+              <span class="label-text">Land Area (m²)</span>
+            </label>
+            <div class="flex gap-2">
+              <input type="number" name="land_area_min" placeholder="Min"
+                     class="input input-bordered w-full" min="1">
+              <input type="number" name="land_area_max" placeholder="Max"
+                     class="input input-bordered w-full" min="1">
+            </div>
+          </div>
+
+          <!-- Floors -->
+          <div class="form-control">
+            <label class="label">
+              <span class="label-text">Floors</span>
+            </label>
+            <div class="flex gap-2">
+              <input type="number" name="floors_min" placeholder="Min"
+                     class="input input-bordered w-full" min="1" max="5">
+              <input type="number" name="floors_max" placeholder="Max"
+                     class="input input-bordered w-full" min="1" max="5">
+            </div>
+          </div>
+
+          <!-- Price -->
+          <div class="form-control">
+            <label class="label">
+              <span class="label-text">Price (EUR)</span>
+            </label>
+            <div class="flex gap-2">
+              <input type="number" name="price_min" placeholder="Min"
+                     class="input input-bordered w-full" min="0" step="1000">
+              <input type="number" name="price_max" placeholder="Max"
+                     class="input input-bordered w-full" min="0" step="1000">
+            </div>
+          </div>
+        </div>
+
+        <div class="mt-4">
+          <button type="submit" class="btn btn-primary" data-sscom-search-target="searchButton">
+            <span class="loading loading-spinner loading-sm hidden" data-sscom-search-target="loadingSpinner"></span>
+            Search Houses
+          </button>
+        </div>
+      <% end %>
+    </div>
+  </div>
+
+  <!-- Search Results -->
+  <div id="search-results">
+    <!-- Results will be loaded here via Turbo Stream -->
+  </div>
+
+  <!-- Followed Houses Card -->
+  <div class="card bg-base-100 shadow-xl">
+    <div class="card-body p-4 sm:p-6">
+      <h2 class="card-title text-lg sm:text-xl">Your Followed Houses</h2>
+
+      <div class="divide-y divide-base-300" id="followed-houses">
+        <% @followed_houses.each do |follow| %>
+          <%= render partial: "sscom/houses/followed_item", locals: { follow: follow, ad: follow.ss_house_ad } %>
+        <% end %>
+      </div>
+
+      <% if @followed_houses.empty? %>
+        <div class="text-center py-8" id="followed-houses-empty">
+          <svg class="mx-auto h-12 w-12 text-base-content/30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
+          </svg>
+          <h3 class="mt-2 font-medium">No houses followed</h3>
+          <p class="mt-1 text-sm text-base-content/70">Search for houses above and click "Follow" to track price changes.</p>
+        </div>
+      <% end %>
+    </div>
+  </div>
+
+  <!-- Delete Confirmation Modal -->
+  <dialog class="modal modal-bottom sm:modal-middle" data-delete-confirm-target="modal">
+    <div class="modal-box">
+      <h3 class="text-lg font-bold">Confirm Unfollow</h3>
+      <p class="py-4" data-delete-confirm-target="message">Are you sure you want to unfollow this ad?</p>
+      <div class="modal-action">
+        <button type="button" class="btn" data-action="click->delete-confirm#close">Cancel</button>
+        <button type="button" class="btn btn-error" data-action="click->delete-confirm#confirm">Unfollow</button>
+      </div>
+    </div>
+    <form method="dialog" class="modal-backdrop">
+      <button>close</button>
+    </form>
+  </dialog>
+</div>

@@ -8,6 +8,10 @@ class User < ApplicationRecord
   has_many :flydubai_flight_searches, dependent: :destroy
   has_many :turkish_flight_searches, dependent: :destroy
   has_many :booking_searches, dependent: :destroy
+  has_many :ss_flat_follows, dependent: :destroy
+  has_many :followed_flats, through: :ss_flat_follows, source: :ss_flat_ad
+  has_many :ss_house_follows, dependent: :destroy
+  has_many :followed_houses, through: :ss_house_follows, source: :ss_house_ad
 
   validates :email, presence: true,
                     uniqueness: { case_sensitive: false },

@@ -1,0 +1,45 @@
+<tr id="<%= dom_id(ad) %>">
+  <td class="w-16">
+    <% if ad.thumbnail_url.present? %>
+      <div class="w-12 h-12 rounded overflow-hidden">
+        <img src="<%= ad.thumbnail_url %>" alt="" class="w-full h-full object-cover">
+      </div>
+    <% end %>
+  </td>
+  <td>
+    <div class="font-medium text-sm"><%= ad.street || ad.display_title %></div>
+    <div class="text-xs text-base-content/50"><%= ad.ss_city&.name_lv || ad.ss_region.name_lv %></div>
+  </td>
+  <td><%= ad.rooms %></td>
+  <td><%= ad.area %> m²</td>
+  <td><%= ad.floor_display %></td>
+  <td class="text-xs"><%= ad.building_series %></td>
+  <td class="font-semibold">
+    <% if ad.price %>
+      €<%= number_with_precision(ad.price, precision: 0, delimiter: ' ') %>
+    <% else %>
+      -
+    <% end %>
+  </td>
+  <td class="text-sm text-base-content/70">
+    <% if ad.price_per_m2 %>
+      €<%= number_with_precision(ad.price_per_m2, precision: 0) %>
+    <% end %>
+  </td>
+  <td>
+    <div class="flex items-center gap-1">
+      <a href="<%= ad.original_url %>" target="_blank" class="btn btn-ghost btn-sm btn-square" title="Open on SS.COM">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+        </svg>
+      </a>
+      <% if followed %>
+        <span class="badge badge-success badge-sm">Following</span>
+      <% else %>
+        <%= button_to sscom_flats_follow_path(ad.id), method: :post, class: "btn btn-primary btn-sm", data: { turbo_method: :post } do %>
+          Follow
+        <% end %>
+      <% end %>
+    </div>
+  </td>
+</tr>

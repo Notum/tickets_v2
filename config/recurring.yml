@@ -89,6 +89,23 @@ cleanup_expired_flights:
   queue: default
   schedule: every day at 1:00 Europe/Riga
 
+# Sync SS.COM regions weekly on Sunday at 4:00 AM
+sync_ss_regions:
+  class: SyncSsRegionsJob
+  queue: default
+  schedule: every Sunday at 4:00 Europe/Riga
+
+# Check SS.COM followed ads twice daily (8:00 and 20:00 Riga time)
+check_ss_followed_ads_morning:
+  class: CheckSsFollowedAdsJob
+  queue: default
+  schedule: every day at 8:00 Europe/Riga
+
+check_ss_followed_ads_evening:
+  class: CheckSsFollowedAdsJob
+  queue: default
+  schedule: every day at 20:00 Europe/Riga
+
 production:
   sync_ryanair_routes:
     class: SyncRyanairRoutesJob
@@ -175,3 +192,20 @@ production:
     class: CleanupExpiredFlightSearchesJob
     queue: default
     schedule: every day at 1:00 Europe/Riga
+
+  # Sync SS.COM regions weekly on Sunday at 4:00 AM
+  sync_ss_regions:
+    class: SyncSsRegionsJob
+    queue: default
+    schedule: every Sunday at 4:00 Europe/Riga
+
+  # Check SS.COM followed ads twice daily (8:00 and 20:00 Riga time)
+  check_ss_followed_ads_morning:
+    class: CheckSsFollowedAdsJob
+    queue: default
+    schedule: every day at 8:00 Europe/Riga
+
+  check_ss_followed_ads_evening:
+    class: CheckSsFollowedAdsJob
+    queue: default
+    schedule: every day at 20:00 Europe/Riga

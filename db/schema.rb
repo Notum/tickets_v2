@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_01_17_145121) do
+ActiveRecord::Schema[8.0].define(version: 2026_01_18_100008) do
   create_table "airbaltic_destinations", force: :cascade do |t|
     t.string "code", null: false
     t.string "name", null: false
@@ -265,6 +265,150 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_17_145121) do
     t.index ["ryanair_flight_search_id"], name: "index_ryanair_price_histories_on_ryanair_flight_search_id"
   end
 
+  create_table "ss_cities", force: :cascade do |t|
+    t.integer "ss_region_id", null: false
+    t.string "slug", null: false
+    t.string "name_lv", null: false
+    t.string "name_ru"
+    t.integer "position", default: 0
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["ss_region_id", "slug"], name: "index_ss_cities_on_ss_region_id_and_slug", unique: true
+    t.index ["ss_region_id"], name: "index_ss_cities_on_ss_region_id"
+  end
+
+  create_table "ss_flat_ads", force: :cascade do |t|
+    t.string "external_id", null: false
+    t.string "content_hash", null: false
+    t.integer "ss_region_id", null: false
+    t.integer "ss_city_id"
+    t.string "street"
+    t.integer "rooms"
+    t.decimal "area", precision: 10, scale: 2
+    t.integer "floor_current"
+    t.integer "floor_total"
+    t.string "building_series"
+    t.string "house_type"
+    t.string "deal_type", default: "sell", null: false
+    t.decimal "price", precision: 12, scale: 2
+    t.decimal "price_per_m2", precision: 10, scale: 2
+    t.string "title"
+    t.text "description"
+    t.string "thumbnail_url"
+    t.json "image_urls"
+    t.string "original_url", null: false
+    t.datetime "posted_at"
+    t.datetime "last_seen_at"
+    t.boolean "active", default: true, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["active"], name: "index_ss_flat_ads_on_active"
+    t.index ["content_hash"], name: "index_ss_flat_ads_on_content_hash"
+    t.index ["deal_type"], name: "index_ss_flat_ads_on_deal_type"
+    t.index ["external_id"], name: "index_ss_flat_ads_on_external_id", unique: true
+    t.index ["price"], name: "index_ss_flat_ads_on_price"
+    t.index ["ss_city_id"], name: "index_ss_flat_ads_on_ss_city_id"
+    t.index ["ss_region_id", "rooms"], name: "index_ss_flat_ads_on_ss_region_id_and_rooms"
+    t.index ["ss_region_id"], name: "index_ss_flat_ads_on_ss_region_id"
+  end
+
+  create_table "ss_flat_follows", force: :cascade do |t|
+    t.integer "user_id", null: false
+    t.integer "ss_flat_ad_id", null: false
+    t.decimal "price_at_follow", precision: 12, scale: 2
+    t.datetime "last_checked_at"
+    t.string "status", default: "active", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["ss_flat_ad_id"], name: "index_ss_flat_follows_on_ss_flat_ad_id"
+    t.index ["status"], name: "index_ss_flat_follows_on_status"
+    t.index ["user_id", "ss_flat_ad_id"], name: "index_ss_flat_follows_on_user_id_and_ss_flat_ad_id", unique: true
+    t.index ["user_id"], name: "index_ss_flat_follows_on_user_id"
+  end
+
+  create_table "ss_flat_price_histories", force: :cascade do |t|
+    t.integer "ss_flat_ad_id", null: false
+    t.decimal "price", precision: 12, scale: 2
+    t.decimal "price_per_m2", precision: 10, scale: 2
+    t.datetime "recorded_at", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["ss_flat_ad_id", "recorded_at"], name: "idx_ss_flat_price_history_ad_recorded"
+    t.index ["ss_flat_ad_id"], name: "index_ss_flat_price_histories_on_ss_flat_ad_id"
+  end
+
+  create_table "ss_house_ads", force: :cascade do |t|
+    t.string "external_id", null: false
+    t.string "content_hash", null: false
+    t.integer "ss_region_id", null: false
+    t.integer "ss_city_id"
+    t.string "street"
+    t.integer "rooms"
+    t.decimal "area", precision: 10, scale: 2
+    t.decimal "land_area", precision: 10, scale: 2
+    t.integer "floors"
+    t.string "house_type"
+    t.string "deal_type", default: "sell", null: false
+    t.decimal "price", precision: 12, scale: 2
+    t.decimal "price_per_m2", precision: 10, scale: 2
+    t.string "title"
+    t.text "description"
+    t.string "thumbnail_url"
+    t.json "image_urls"
+    t.string "original_url", null: false
+    t.datetime "posted_at"
+    t.datetime "last_seen_at"
+    t.boolean "active", default: true, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["active"], name: "index_ss_house_ads_on_active"
+    t.index ["content_hash"], name: "index_ss_house_ads_on_content_hash"
+    t.index ["deal_type"], name: "index_ss_house_ads_on_deal_type"
+    t.index ["external_id"], name: "index_ss_house_ads_on_external_id", unique: true
+    t.index ["price"], name: "index_ss_house_ads_on_price"
+    t.index ["ss_city_id"], name: "index_ss_house_ads_on_ss_city_id"
+    t.index ["ss_region_id", "rooms"], name: "index_ss_house_ads_on_ss_region_id_and_rooms"
+    t.index ["ss_region_id"], name: "index_ss_house_ads_on_ss_region_id"
+  end
+
+  create_table "ss_house_follows", force: :cascade do |t|
+    t.integer "user_id", null: false
+    t.integer "ss_house_ad_id", null: false
+    t.decimal "price_at_follow", precision: 12, scale: 2
+    t.datetime "last_checked_at"
+    t.string "status", default: "active", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["ss_house_ad_id"], name: "index_ss_house_follows_on_ss_house_ad_id"
+    t.index ["status"], name: "index_ss_house_follows_on_status"
+    t.index ["user_id", "ss_house_ad_id"], name: "index_ss_house_follows_on_user_id_and_ss_house_ad_id", unique: true
+    t.index ["user_id"], name: "index_ss_house_follows_on_user_id"
+  end
+
+  create_table "ss_house_price_histories", force: :cascade do |t|
+    t.integer "ss_house_ad_id", null: false
+    t.decimal "price", precision: 12, scale: 2
+    t.decimal "price_per_m2", precision: 10, scale: 2
+    t.datetime "recorded_at", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["ss_house_ad_id", "recorded_at"], name: "idx_ss_house_price_history_ad_recorded"
+    t.index ["ss_house_ad_id"], name: "index_ss_house_price_histories_on_ss_house_ad_id"
+  end
+
+  create_table "ss_regions", force: :cascade do |t|
+    t.string "slug", null: false
+    t.string "name_lv", null: false
+    t.string "name_ru"
+    t.string "parent_slug"
+    t.integer "position", default: 0
+    t.datetime "last_synced_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["parent_slug"], name: "index_ss_regions_on_parent_slug"
+    t.index ["slug"], name: "index_ss_regions_on_slug", unique: true
+  end
+
   create_table "turkish_flight_searches", force: :cascade do |t|
     t.integer "user_id", null: false
     t.string "destination_code", null: false
@@ -324,6 +468,17 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_17_145121) do
   add_foreign_key "ryanair_flight_searches", "ryanair_destinations"
   add_foreign_key "ryanair_flight_searches", "users"
   add_foreign_key "ryanair_price_histories", "ryanair_flight_searches"
+  add_foreign_key "ss_cities", "ss_regions"
+  add_foreign_key "ss_flat_ads", "ss_cities"
+  add_foreign_key "ss_flat_ads", "ss_regions"
+  add_foreign_key "ss_flat_follows", "ss_flat_ads"
+  add_foreign_key "ss_flat_follows", "users"
+  add_foreign_key "ss_flat_price_histories", "ss_flat_ads"
+  add_foreign_key "ss_house_ads", "ss_cities"
+  add_foreign_key "ss_house_ads", "ss_regions"
+  add_foreign_key "ss_house_follows", "ss_house_ads"
+  add_foreign_key "ss_house_follows", "users"
+  add_foreign_key "ss_house_price_histories", "ss_house_ads"
   add_foreign_key "turkish_flight_searches", "users"
   add_foreign_key "turkish_price_histories", "turkish_flight_searches"
 end

@@ -1,0 +1,61 @@
+<div class="py-3 flex items-center gap-4" id="follow_<%= follow.id %>">
+  <!-- Thumbnail -->
+  <div class="w-16 h-16 shrink-0 bg-base-200 rounded overflow-hidden">
+    <% if ad.thumbnail_url.present? %>
+      <img src="<%= ad.thumbnail_url %>" alt="" class="w-full h-full object-cover">
+    <% else %>
+      <div class="w-full h-full flex items-center justify-center text-base-content/30">
+        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
+        </svg>
+      </div>
+    <% end %>
+  </div>
+
+  <!-- Details -->
+  <div class="flex-1 min-w-0">
+    <div class="font-medium truncate"><%= ad.display_title %></div>
+    <div class="text-sm text-base-content/70"><%= ad.location_display %></div>
+    <div class="text-xs text-base-content/50">
+      <% if ad.rooms %><%= ad.rooms %> rooms<% end %>
+      <% if ad.area %> · <%= ad.area %> m²<% end %>
+      <% if ad.floor_display %> · Floor <%= ad.floor_display %><% end %>
+    </div>
+  </div>
+
+  <!-- Price -->
+  <div class="text-right shrink-0">
+    <% if ad.price %>
+      <p class="text-lg font-semibold <%= follow.price_dropped? ? 'text-success' : '' %>">
+        €<%= number_with_precision(ad.price, precision: 0, delimiter: ' ') %>
+      </p>
+      <% if follow.price_dropped? %>
+        <p class="text-xs text-success">
+          ↓ €<%= number_with_precision(follow.price_drop_amount, precision: 0, delimiter: ' ') %>
+          (<%= follow.price_drop_percentage %>%)
+        </p>
+      <% elsif ad.price_per_m2 %>
+        <p class="text-xs text-base-content/50">€<%= number_with_precision(ad.price_per_m2, precision: 0) %>/m²</p>
+      <% end %>
+    <% else %>
+      <p class="text-lg font-semibold text-base-content/30">-</p>
+    <% end %>
+  </div>
+
+  <!-- Actions -->
+  <div class="flex items-center gap-1 shrink-0">
+    <a href="<%= ad.original_url %>" target="_blank" class="btn btn-ghost btn-sm btn-square" title="Open on SS.COM">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+      </svg>
+    </a>
+    <%= button_to sscom_flats_unfollow_path(ad.id), method: :delete, class: "btn btn-ghost btn-sm btn-square text-error", title: "Unfollow", data: { turbo_method: :delete } do %>
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+      </svg>
+    <% end %>
+    <% unless ad.active? %>
+      <span class="badge badge-warning badge-xs ml-1">Removed</span>
+    <% end %>
+  </div>
+</div>

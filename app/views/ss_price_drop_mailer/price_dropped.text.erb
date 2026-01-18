@@ -1,0 +1,17 @@
+SS.COM Price Drop Alert
+
+Hi <%= @user.email %>, great news! The following real estate prices have dropped:
+
+<% @price_drops.each do |drop| %>
+<%= drop[:title] %> (<%= drop[:ad_type].capitalize %>)
+Location: <%= drop[:location] %>
+<% if drop[:rooms] %>Rooms: <%= drop[:rooms] %><% end %>
+<% if drop[:area] %>Area: <%= drop[:area] %> m²<% end %>
+<% if drop[:floor] %>Floor: <%= drop[:floor] %><% end %>
+<% if drop[:land_area] %>Land: <%= drop[:land_area] %> m²<% end %>
+Price: €<%= number_with_precision(drop[:previous_price], precision: 0) %> -> €<%= number_with_precision(drop[:current_price], precision: 0) %> (-€<%= number_with_precision(drop[:savings], precision: 0) %>, -<%= number_with_precision(drop[:percentage], precision: 1) %>%)
+Link: <%= drop[:url] %>
+
+<% end %>
+---
+You receive alerts for any price drops on followed ads | Tickets@Petrucho.me

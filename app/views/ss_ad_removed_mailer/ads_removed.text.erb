@@ -1,0 +1,12 @@
+SS.COM - Ads Removed
+
+Hi <%= @user.email %>, the following ads you were following have been removed from SS.COM:
+
+<% @ads.each do |ad| %>
+<%= ad[:title] %> (<%= ad[:ad_type].capitalize %>)
+Location: <%= ad[:location] %>
+Status: Removed
+
+<% end %>
+---
+The ad may have been sold, expired, or removed by the owner | Tickets@Petrucho.me

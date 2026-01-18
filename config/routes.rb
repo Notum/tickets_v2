@@ -56,6 +56,21 @@ Rails.application.routes.draw do
     post "booking/:id/refresh_price", to: "accommodation/booking#refresh_price", as: :booking_refresh_price
   end
 
+  # SS.COM Real Estate
+  scope :sscom, as: :sscom do
+    # Flats
+    get :flats, to: "sscom/flats#index"
+    post "flats/search", to: "sscom/flats#search"
+    post "flats/:id/follow", to: "sscom/flats#follow", as: :flats_follow
+    delete "flats/:id/unfollow", to: "sscom/flats#unfollow", as: :flats_unfollow
+
+    # Houses
+    get :houses, to: "sscom/houses#index"
+    post "houses/search", to: "sscom/houses#search"
+    post "houses/:id/follow", to: "sscom/houses#follow", as: :houses_follow
+    delete "houses/:id/unfollow", to: "sscom/houses#unfollow", as: :houses_unfollow
+  end
+
   # API endpoints (AJAX)
   namespace :api do
     # Ryanair
@@ -89,6 +104,12 @@ Rails.application.routes.draw do
     # Booking.com
     get "booking/search_hotels", to: "booking#search_hotels"
     get "booking/fetch_rooms", to: "booking#fetch_rooms"
+
+    # SS.COM Real Estate
+    get "sscom/regions", to: "sscom#regions"
+    get "sscom/cities", to: "sscom#cities"
+    post "sscom/search_flats", to: "sscom#search_flats"
+    post "sscom/search_houses", to: "sscom#search_houses"
   end
 
   # Reveal health status on /up that returns 200 if the app boots with no exceptions, otherwise 500.
