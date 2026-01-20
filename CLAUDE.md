@@ -4,7 +4,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-TicketsV2 is a flight ticket price tracking application built with Rails 8.0 and Ruby 3.4.5. It monitors flight prices from six airlines (Ryanair, AirBaltic, Norwegian, Bode.lv charter flights, FlyDubai, Turkish Airlines) departing from Riga (RIX), tracks price history, and sends email notifications when prices drop.
+TicketsV2 is a price tracking application built with Rails 8.0 and Ruby 3.4.5. It monitors:
+- **Flight prices** from six airlines (Ryanair, AirBaltic, Norwegian, Bode.lv charter flights, FlyDubai, Turkish Airlines) departing from Riga (RIX)
+- **Hotel prices** from Booking.com
+- **Real estate listings** from SS.com (Latvian classifieds)
+
+It tracks price history and sends email notifications when prices drop.
 
 ## Common Commands
 
@@ -65,6 +70,8 @@ bin/rails users:create[user@example.com]               # Create a new user
 - **Email**: Mailgun for delivery
 
 ### Domain Model
+
+#### Airlines
 Each airline follows the same pattern with three models:
 - `{Airline}Destination` - Airport/destination data synced from external APIs
 - `{Airline}FlightSearch` - User's tracked flight (dates, prices, status)
@@ -72,22 +79,60 @@ Each airline follows the same pattern with three models:
 
 Airlines: `Ryanair`, `Airbaltic`, `Norwegian`, `Bode` (charter flights), `Flydubai` (RIX-DXB only), `Turkish` (1-stop via Istanbul)
 
+#### Booking.com Hotels
+- `BookingSearch` - User's tracked hotel (city, hotel, dates, room preferences)
+- `BookingPriceHistory` - Historical price records
+
+#### SS.com Real Estate (Latvian Classifieds)
+- `SsRegion`, `SsCity` - Geographic hierarchy for listings
+- `SsFlatAd`, `SsHouseAd` - Flat and house listing data
+- `SsFlatFollow`, `SsHouseFollow` - User's followed listings
+- `SsFlatPriceHistory`, `SsHousePriceHistory` - Price change tracking
+
 ### Service Layer (`app/services/`)
+
+#### Airlines
 Each airline has services namespaced under its name:
 - `{Airline}::PriceFetchService` - Fetches current prices from airline API
 - `{Airline}::DestinationsSyncService` or `RouteSyncService` - Syncs available destinations
 - Date services for fetching available flight dates
 
+#### Booking.com (`app/services/booking/`)
+- `Booking::HotelSearchService` - Search hotels by name/city (uses Byparr)
+- `Booking::RoomFetchService` - Fetch available rooms for a hotel
+- `Booking::PriceFetchService` - Fetch current room prices
+
+#### SS.com (`app/services/sscom/`)
+- `Sscom::BaseService` - Base class with encoding handling (windows-1257 for Latvian, windows-1251 for Russian)
+- `Sscom::RegionsSyncService` - Syncs regions and cities from SS.com
+- `Sscom::FlatListingService`, `Sscom::HouseListingService` - Scrape listing pages
+- `Sscom::AdFetchService` - Fetch individual ad details
+- `Sscom::PriceCheckService` - Check prices for followed ads
+- `Sscom::AdMatchService` - Match ads for price monitoring
+
 ### Background Jobs (`app/jobs/`)
 Recurring jobs configured in `config/recurring.yml` (Solid Queue):
+
+#### Airlines
 - `Sync{Airline}DestinationsJob` / `SyncRyanairRoutesJob` - Hourly destination sync
 - `RefreshAll{Airline}PricesJob` - Hourly price refresh for all tracked flights
 - `Fetch{Airline}PriceJob` - Single flight price fetch
 - `CleanupExpiredFlightSearchesJob` - Daily cleanup of past flight searches
 
+#### Booking.com
+- `FetchBookingPriceJob` - Single hotel price fetch
+- `RefreshAllBookingPricesJob` - Twice daily (8:00, 20:00 Riga time)
+
+#### SS.com
+- `SyncSsRegionsJob` - Weekly (Sunday 4:00 AM)
+- `CheckSsFollowedAdsJob` - Twice daily (8:00, 20:00 Riga time)
+
 ### Controllers
 - `Tickets::{Airline}Controller` - CRUD for user's flight searches per airline
+- `Accommodation::BookingController` - CRUD for hotel searches
 - `Api::{Airline}Controller` - AJAX endpoints for dynamic form data (destinations, dates)
+- `Api::BookingController` - AJAX for hotel search/rooms
+- `Api::SscomController` - AJAX for SS.com data
 - `SessionsController` - Email-based authentication (no password)
 - `ProfilesController` - User settings (price notification threshold)
 
@@ -133,7 +178,7 @@ docker run -d --name flaresolverr -p 8191:8191 ghcr.io/thephaseless/byparr:lates
 
 **Usage in code:**
 - `FlaresolverrService` (`app/services/flaresolverr_service.rb`) wraps the API
-- Used by Norwegian and FlyDubai services (date services, price fetch)
+- Used by Norwegian, FlyDubai, and Booking.com services
 - `FlaresolverrService.available?` - check if service is running
 - Raises `FlaresolverrService::FlaresolverrError` on failures
 
@@ -165,6 +210,13 @@ Turkish Airlines flights are searched via a flight matrix API with 1-stop connec
 - `Turkish::DestinationsSearchService` - Searches available destinations
 - `Turkish::PriceFetchService` - Fetches prices for specific dates
 - No destinations table (destinations searched dynamically)
+
+#### SS.com (Latvian Classifieds)
+SS.com is scraped directly (no API). Key considerations:
+- **Encoding**: Site uses legacy encodings - windows-1257 for Latvian (`/lv/`), windows-1251 for Russian (`/ru/`)
+- `Sscom::BaseService` handles encoding detection and conversion to UTF-8
+- Listings have `content_hash` to detect changes (computed from address, rooms, area, floor)
+- Deal types: `sell`, `buy`, `rent_out`, `rent_want`, `exchange`
 
 ## Key Configuration
 
