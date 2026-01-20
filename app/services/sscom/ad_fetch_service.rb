@@ -41,9 +41,14 @@ module Sscom
         return { success: false, error: "Could not parse ad page" }
       end
 
-      # Check if ad is removed
+      # Check if ad is explicitly marked as removed
       if ad_removed?(doc)
         return { success: false, error: "This ad has been removed from SS.COM" }
+      end
+
+      # Check if page looks like a valid ad page
+      unless page_looks_valid?(doc)
+        return { success: false, error: "Page structure not recognized - the ad may have been removed or the page format has changed" }
       end
 
       # Parse ad details
@@ -112,6 +117,8 @@ module Sscom
     end
 
     def ad_removed?(doc)
+      # Check for POSITIVE indicators that ad has been removed
+      # Only return true if we find explicit removal messages
       page_text = doc.text.downcase
 
       page_text.include?("sludinājums ir dzēsts") ||
@@ -119,7 +126,13 @@ module Sscom
         page_text.include?("ad has been deleted") ||
         page_text.include?("nav atrasts") ||
         page_text.include?("не найдено") ||
-        doc.at_css("#msg_div_msg, #content_main_div, .options_list").nil?
+        page_text.include?("sludinājums nav atrasts") ||
+        page_text.include?("объявление не найдено")
+    end
+
+    def page_looks_valid?(doc)
+      # Check if the page looks like a valid ad page (has expected structure)
+      doc.at_css("#msg_div_msg, #content_main_div, .options_list, .msg_div_msg, .msga2-o").present?
     end
 
     def parse_ad_details(doc)

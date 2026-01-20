@@ -11,18 +11,26 @@ module Sscom
 
       html = fetch_page(@ad.original_url)
       unless html
-        Rails.logger.warn "[Sscom::PriceCheckService] Failed to fetch ad page"
-        return { success: false, error: "Failed to fetch ad page", ad_removed: check_if_removed(@ad.original_url) }
+        Rails.logger.warn "[Sscom::PriceCheckService] Failed to fetch ad page - network error or timeout"
+        # Don't mark as removed on fetch failure - could be temporary network issue
+        return { success: false, error: "Failed to fetch ad page" }
       end
 
       doc = parse_html(html)
       return { success: false, error: "Failed to parse HTML" } unless doc
 
-      # Check if ad is still active
+      # Check if ad is explicitly marked as removed (with specific removal messages)
       if ad_removed?(doc)
-        Rails.logger.info "[Sscom::PriceCheckService] Ad #{@ad.external_id} appears to be removed"
+        Rails.logger.info "[Sscom::PriceCheckService] Ad #{@ad.external_id} confirmed as removed (removal message found)"
         @ad.update!(active: false, last_seen_at: Time.current)
         return { success: true, ad_removed: true }
+      end
+
+      # Check if page looks like a valid ad page
+      unless page_looks_valid?(doc)
+        Rails.logger.warn "[Sscom::PriceCheckService] Page doesn't look like a valid ad (missing expected elements)"
+        # Don't mark as removed - could be HTML structure change or error page
+        return { success: false, error: "Page structure not recognized - please verify ad manually" }
       end
 
       # Extract current price
@@ -74,24 +82,39 @@ module Sscom
     private
 
     def ad_removed?(doc)
-      # Check for common indicators that ad has been removed
+      # Check for POSITIVE indicators that ad has been removed
+      # We should only mark as removed if we find explicit removal messages,
+      # NOT if elements are simply missing (could be HTML structure change, etc.)
       page_text = doc.text.downcase
 
-      page_text.include?("sludinājums ir dzēsts") ||
+      removal_confirmed = page_text.include?("sludinājums ir dzēsts") ||
         page_text.include?("объявление удалено") ||
         page_text.include?("ad has been deleted") ||
         page_text.include?("nav atrasts") ||
         page_text.include?("не найдено") ||
-        doc.at_css(".msg_div_msg, .msga2-o, .msg-body").nil?
+        page_text.include?("sludinājums nav atrasts") ||
+        page_text.include?("объявление не найдено")
+
+      if removal_confirmed
+        Rails.logger.info "[Sscom::PriceCheckService] Removal message found in page"
+      end
+
+      removal_confirmed
+    end
+
+    def page_looks_valid?(doc)
+      # Check if the page looks like a valid ad page (has expected structure)
+      doc.at_css(".msg_div_msg, .msga2-o, .msg-body, #msg_div_msg, .options_list, #content_main_div").present?
     end
 
     def check_if_removed(url)
       # Quick check if URL returns 404 or shows removed message
+      # Returns nil if we can't determine (fetch failed), true if confirmed removed, false if still active
       html = fetch_page(url)
-      return true unless html
+      return nil unless html  # Can't determine - don't mark as removed
 
       doc = parse_html(html)
-      return true unless doc
+      return nil unless doc  # Can't determine - don't mark as removed
 
       ad_removed?(doc)
     end
