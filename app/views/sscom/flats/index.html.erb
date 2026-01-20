@@ -135,6 +135,30 @@
     <!-- Results will be loaded here via Turbo Stream -->
   </div>
 
+  <!-- Add by URL Card -->
+  <div class="card bg-base-100 shadow-xl">
+    <div class="card-body p-4 sm:p-6">
+      <h2 class="card-title text-base sm:text-lg">Track Ad by URL</h2>
+      <p class="text-sm text-base-content/70 mb-4">Paste a direct link to a flat listing from SS.COM to track its price changes.</p>
+
+      <%= form_with url: sscom_flats_follow_by_url_path, method: :post, id: "flat-url-form", data: { turbo_frame: "_top" } do |f| %>
+        <div class="flex flex-col sm:flex-row gap-3">
+          <div class="form-control flex-1">
+            <input type="text" name="url" id="flat-url-input" placeholder="https://www.ss.com/msg/ru/real-estate/flats/..."
+                   class="input input-bordered w-full"
+                   required>
+          </div>
+          <button type="submit" class="btn btn-secondary">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m13.35-.622l1.757-1.757a4.5 4.5 0 00-6.364-6.364l-4.5 4.5a4.5 4.5 0 001.242 7.244" />
+            </svg>
+            Track This Ad
+          </button>
+        </div>
+      <% end %>
+    </div>
+  </div>
+
   <!-- Followed Flats Card -->
   <div class="card bg-base-100 shadow-xl">
     <div class="card-body p-4 sm:p-6">

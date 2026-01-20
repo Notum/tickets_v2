@@ -61,12 +61,14 @@ Rails.application.routes.draw do
     # Flats
     get :flats, to: "sscom/flats#index"
     post "flats/search", to: "sscom/flats#search"
+    post "flats/follow_by_url", to: "sscom/flats#follow_by_url", as: :flats_follow_by_url
     post "flats/:id/follow", to: "sscom/flats#follow", as: :flats_follow
     delete "flats/:id/unfollow", to: "sscom/flats#unfollow", as: :flats_unfollow
 
     # Houses
     get :houses, to: "sscom/houses#index"
     post "houses/search", to: "sscom/houses#search"
+    post "houses/follow_by_url", to: "sscom/houses#follow_by_url", as: :houses_follow_by_url
     post "houses/:id/follow", to: "sscom/houses#follow", as: :houses_follow
     delete "houses/:id/unfollow", to: "sscom/houses#unfollow", as: :houses_unfollow
   end

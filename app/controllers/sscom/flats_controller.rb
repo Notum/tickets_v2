@@ -115,6 +115,61 @@ module Sscom
       end
     end
 
+    def follow_by_url
+      url = params[:url].to_s.strip
+
+      if url.blank?
+        respond_with_error("Please enter a valid SS.COM URL")
+        return
+      end
+
+      # Validate that URL is for flats
+      unless url.match?(%r{ss\.com/msg/[a-z]{2}/real-estate/flats/}i)
+        respond_with_error("Please enter a URL for a flat listing (not houses)")
+        return
+      end
+
+      result = ::Sscom::AdFetchService.new(url: url).call
+
+      unless result[:success]
+        respond_with_error(result[:error])
+        return
+      end
+
+      ad = result[:ad]
+
+      # Check if already following
+      existing_follow = current_user.ss_flat_follows.find_by(ss_flat_ad: ad)
+      if existing_follow
+        respond_to do |format|
+          format.turbo_stream do
+            render turbo_stream: turbo_stream.prepend("flash", partial: "shared/flash", locals: { type: "info", message: "You are already following this ad." })
+          end
+          format.html { redirect_to sscom_flats_path, notice: "You are already following this ad." }
+        end
+        return
+      end
+
+      # Create the follow
+      follow = current_user.ss_flat_follows.build(ss_flat_ad: ad)
+
+      if follow.save
+        respond_to do |format|
+          format.turbo_stream do
+            render turbo_stream: [
+              turbo_stream.remove("followed-flats-empty"),
+              turbo_stream.prepend("followed-flats", partial: "sscom/flats/followed_item", locals: { follow: follow, ad: ad }),
+              turbo_stream.prepend("flash", partial: "shared/flash", locals: { type: "success", message: "Now following this ad." }),
+              turbo_stream.replace("flat-url-input", "<input type=\"text\" name=\"url\" id=\"flat-url-input\" placeholder=\"https://www.ss.com/msg/ru/real-estate/flats/...\" class=\"input input-bordered w-full\" required>")
+            ]
+          end
+          format.html { redirect_to sscom_flats_path, notice: "Now following this ad." }
+        end
+      else
+        respond_with_error(follow.errors.full_messages.join(", "))
+      end
+    end
+
     private
 
     def apply_filters(scope, filters)

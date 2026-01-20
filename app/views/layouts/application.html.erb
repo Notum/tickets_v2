@@ -27,21 +27,23 @@
       <%= render "shared/top_navigation" %>
     <% end %>
 
-    <% if flash[:notice] %>
-      <div class="toast toast-top toast-end z-50" data-controller="auto-dismiss">
-        <div class="alert alert-success bg-opacity-90">
-          <span><%= flash[:notice] %></span>
+    <div id="flash">
+      <% if flash[:notice] %>
+        <div class="toast toast-top toast-end z-50" data-controller="auto-dismiss">
+          <div class="alert alert-success bg-opacity-90">
+            <span><%= flash[:notice] %></span>
+          </div>
         </div>
-      </div>
-    <% end %>
+      <% end %>
 
-    <% if flash[:alert] && !controller_name.in?(%w[sessions]) %>
-      <div class="toast toast-top toast-end z-50" data-controller="auto-dismiss">
-        <div class="alert alert-error bg-opacity-90">
-          <span><%= flash[:alert] %></span>
+      <% if flash[:alert] && !controller_name.in?(%w[sessions]) %>
+        <div class="toast toast-top toast-end z-50" data-controller="auto-dismiss">
+          <div class="alert alert-error bg-opacity-90">
+            <span><%= flash[:alert] %></span>
+          </div>
         </div>
-      </div>
-    <% end %>
+      <% end %>
+    </div>
 
     <main class="<%= logged_in? ? 'container mx-auto px-4 py-8 max-w-7xl' : '' %>">
       <%= yield %>
