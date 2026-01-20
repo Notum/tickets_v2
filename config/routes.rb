@@ -115,6 +115,9 @@ Rails.application.routes.draw do
     get "sscom/cities", to: "sscom#cities"
     post "sscom/search_flats", to: "sscom#search_flats"
     post "sscom/search_houses", to: "sscom#search_houses"
+
+    # User Preferences
+    patch "user_preferences/accordion_state", to: "user_preferences#update_accordion_state"
   end
 
   # Reveal health status on /up that returns 200 if the app boots with no exceptions, otherwise 500.

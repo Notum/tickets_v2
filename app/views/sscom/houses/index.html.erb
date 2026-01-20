@@ -2,11 +2,20 @@
   <h1 class="text-xl sm:text-2xl font-bold">SS.COM House Price Tracker</h1>
 
   <!-- Search Form Card -->
-  <div class="card bg-base-100 shadow-xl">
+  <div class="card bg-base-100 shadow-xl"
+       data-controller="search-accordion"
+       data-search-accordion-section-value="sscom_houses_search"
+       data-search-accordion-expanded-value="<%= accordion_expanded?('sscom_houses_search') %>">
     <div class="card-body p-4 sm:p-6">
-      <h2 class="card-title text-base sm:text-lg">Search for Houses</h2>
+      <div class="flex items-center justify-between cursor-pointer" data-action="click->search-accordion#toggle">
+        <h2 class="card-title text-base sm:text-lg">Search for Houses</h2>
+        <svg data-search-accordion-target="icon" class="w-5 h-5 transition-transform duration-200 <%= 'rotate-180' unless accordion_expanded?('sscom_houses_search') %>" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path>
+        </svg>
+      </div>
 
-      <%= form_with url: sscom_houses_search_path, method: :post, data: { sscom_search_target: "form", turbo_frame: "_top" } do |f| %>
+      <div data-search-accordion-target="content" class="<%= 'hidden' unless accordion_expanded?('sscom_houses_search') %>">
+        <%= form_with url: sscom_houses_search_path, method: :post, data: { sscom_search_target: "form", turbo_frame: "_top" } do |f| %>
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-4">
           <!-- Region -->
           <div class="form-control">
@@ -126,7 +135,8 @@
             Search Houses
           </button>
         </div>
-      <% end %>
+        <% end %>
+      </div>
     </div>
   </div>
 

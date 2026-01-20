@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_01_20_173236) do
+ActiveRecord::Schema[8.0].define(version: 2026_01_20_174715) do
   create_table "airbaltic_destinations", force: :cascade do |t|
     t.string "code", null: false
     t.string "name", null: false
@@ -450,6 +450,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_20_173236) do
     t.decimal "price_notification_threshold", precision: 10, scale: 2, default: "5.0", null: false
     t.string "currency", default: "EUR", null: false
     t.datetime "last_login_at"
+    t.json "accordion_states", default: {}
     t.index ["email"], name: "index_users_on_email", unique: true
   end
 

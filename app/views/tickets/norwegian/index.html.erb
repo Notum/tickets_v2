@@ -16,13 +16,21 @@
     end
   %>
   <div class="card bg-base-100 shadow-xl"
-       data-controller="norwegian-search"
+       data-controller="norwegian-search search-accordion"
        data-norwegian-search-saved-searches-value="<%= saved_searches_data.to_json %>"
-       data-norwegian-search-selected-destination-value="<%= @selected_destination_code || '' %>">
+       data-norwegian-search-selected-destination-value="<%= @selected_destination_code || '' %>"
+       data-search-accordion-section-value="norwegian_search"
+       data-search-accordion-expanded-value="<%= accordion_expanded?('norwegian_search') %>">
     <div class="card-body p-4 sm:p-6">
-      <h2 class="card-title text-base sm:text-lg">Search for Flights from Riga (RIX)</h2>
+      <div class="flex items-center justify-between cursor-pointer" data-action="click->search-accordion#toggle">
+        <h2 class="card-title text-base sm:text-lg">Search for Flights from Riga (RIX)</h2>
+        <svg data-search-accordion-target="icon" class="w-5 h-5 transition-transform duration-200 <%= 'rotate-180' unless accordion_expanded?('norwegian_search') %>" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path>
+        </svg>
+      </div>
 
-      <%= form_with url: tickets_norwegian_path, method: :post do |f| %>
+      <div data-search-accordion-target="content" class="<%= 'hidden' unless accordion_expanded?('norwegian_search') %>">
+        <%= form_with url: tickets_norwegian_path, method: :post do |f| %>
         <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mt-4 items-end">
           <!-- Destination -->
           <div class="form-control">
@@ -89,7 +97,8 @@
           <span class="loading loading-spinner loading-sm text-primary"></span>
           <span class="ml-2 text-sm text-base-content/70">Loading available dates...</span>
         </div>
-      <% end %>
+        <% end %>
+      </div>
     </div>
   </div>
 
