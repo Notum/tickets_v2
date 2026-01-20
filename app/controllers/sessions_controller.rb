@@ -10,6 +10,7 @@ class SessionsController < ApplicationController
 
     if user
       session[:user_id] = user.id
+      user.update(last_login_at: Time.current)
       redirect_to default_redirect_path, notice: "Welcome back!"
     else
       flash.now[:alert] = "User not found. Please contact administrator."

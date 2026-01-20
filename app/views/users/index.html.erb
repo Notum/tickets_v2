@@ -1,0 +1,197 @@
+<div class="space-y-4 sm:space-y-6" data-controller="user-management">
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+    <h1 class="text-xl sm:text-2xl font-bold">User Management</h1>
+    <button type="button" class="btn btn-primary btn-sm" data-action="click->user-management#openAddModal">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+      </svg>
+      Add User
+    </button>
+  </div>
+
+  <!-- Users Table Card -->
+  <div class="card bg-base-100 shadow-xl">
+    <div class="card-body p-4 sm:p-6">
+      <h2 class="card-title text-lg sm:text-xl">All Users (<%= @users.count %>)</h2>
+
+      <% if @users.any? %>
+        <!-- Mobile View -->
+        <div class="lg:hidden space-y-3 mt-2">
+          <% @users.each do |user| %>
+            <div class="bg-base-200 rounded-lg p-3">
+              <div class="flex items-start justify-between gap-2">
+                <div>
+                  <div class="font-medium text-sm"><%= user.email %></div>
+                  <div class="text-xs text-base-content/50">
+                    Last login: <%= user.last_login_at ? time_ago_in_words(user.last_login_at) + " ago" : "Never" %>
+                  </div>
+                </div>
+                <% unless user.email.downcase == "pjotrs.sokolovs@gmail.com" %>
+                  <button type="button" class="btn btn-ghost btn-xs btn-square text-error" title="Delete"
+                          data-action="click->user-management#openDeleteModal"
+                          data-user-management-delete-url="<%= user_path(user) %>"
+                          data-user-management-delete-email="<%= user.email %>">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                    </svg>
+                  </button>
+                <% end %>
+              </div>
+              <div class="mt-2 pt-2 border-t border-base-300 grid grid-cols-3 gap-2 text-xs">
+                <div>
+                  <span class="text-base-content/50">Ryanair:</span>
+                  <span class="font-medium"><%= user.ryanair_flight_searches.size %></span>
+                </div>
+                <div>
+                  <span class="text-base-content/50">AirBaltic:</span>
+                  <span class="font-medium"><%= user.airbaltic_flight_searches.size %></span>
+                </div>
+                <div>
+                  <span class="text-base-content/50">Norwegian:</span>
+                  <span class="font-medium"><%= user.norwegian_flight_searches.size %></span>
+                </div>
+                <div>
+                  <span class="text-base-content/50">Bode:</span>
+                  <span class="font-medium"><%= user.bode_flight_searches.size %></span>
+                </div>
+                <div>
+                  <span class="text-base-content/50">FlyDubai:</span>
+                  <span class="font-medium"><%= user.flydubai_flight_searches.size %></span>
+                </div>
+                <div>
+                  <span class="text-base-content/50">Turkish:</span>
+                  <span class="font-medium"><%= user.turkish_flight_searches.size %></span>
+                </div>
+                <div>
+                  <span class="text-base-content/50">Booking:</span>
+                  <span class="font-medium"><%= user.booking_searches.size %></span>
+                </div>
+                <div>
+                  <span class="text-base-content/50">SS Flats:</span>
+                  <span class="font-medium"><%= user.ss_flat_follows.size %></span>
+                </div>
+                <div>
+                  <span class="text-base-content/50">SS Houses:</span>
+                  <span class="font-medium"><%= user.ss_house_follows.size %></span>
+                </div>
+              </div>
+            </div>
+          <% end %>
+        </div>
+
+        <!-- Desktop View -->
+        <div class="hidden lg:block overflow-x-auto mt-2">
+          <table class="table table-zebra">
+            <thead>
+              <tr>
+                <th>Email</th>
+                <th class="text-center">Ryanair</th>
+                <th class="text-center">AirBaltic</th>
+                <th class="text-center">Norwegian</th>
+                <th class="text-center">Bode</th>
+                <th class="text-center">FlyDubai</th>
+                <th class="text-center">Turkish</th>
+                <th class="text-center">Booking</th>
+                <th class="text-center">SS Flats</th>
+                <th class="text-center">SS Houses</th>
+                <th>Last Login</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              <% @users.each do |user| %>
+                <tr>
+                  <td class="font-medium"><%= user.email %></td>
+                  <td class="text-center"><%= user.ryanair_flight_searches.size %></td>
+                  <td class="text-center"><%= user.airbaltic_flight_searches.size %></td>
+                  <td class="text-center"><%= user.norwegian_flight_searches.size %></td>
+                  <td class="text-center"><%= user.bode_flight_searches.size %></td>
+                  <td class="text-center"><%= user.flydubai_flight_searches.size %></td>
+                  <td class="text-center"><%= user.turkish_flight_searches.size %></td>
+                  <td class="text-center"><%= user.booking_searches.size %></td>
+                  <td class="text-center"><%= user.ss_flat_follows.size %></td>
+                  <td class="text-center"><%= user.ss_house_follows.size %></td>
+                  <td class="text-sm text-base-content/70">
+                    <%= user.last_login_at ? time_ago_in_words(user.last_login_at) + " ago" : "Never" %>
+                  </td>
+                  <td>
+                    <% unless user.email.downcase == "pjotrs.sokolovs@gmail.com" %>
+                      <button type="button"
+                              class="btn btn-ghost btn-sm btn-square text-error"
+                              title="Delete"
+                              data-action="click->user-management#openDeleteModal"
+                              data-user-management-delete-url="<%= user_path(user) %>"
+                              data-user-management-delete-email="<%= user.email %>">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                        </svg>
+                      </button>
+                    <% end %>
+                  </td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        </div>
+      <% else %>
+        <div class="text-center py-8">
+          <svg class="mx-auto h-12 w-12 text-base-content/30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>
+          </svg>
+          <h3 class="mt-2 font-medium">No users</h3>
+          <p class="mt-1 text-sm text-base-content/70">Get started by adding a user.</p>
+        </div>
+      <% end %>
+    </div>
+  </div>
+
+  <!-- Add User Modal -->
+  <dialog class="modal modal-bottom sm:modal-middle" data-user-management-target="addModal">
+    <div class="modal-box">
+      <h3 class="text-lg font-bold">Add New User</h3>
+      <%= form_with url: users_path, method: :post, class: "mt-4" do |f| %>
+        <div class="form-control">
+          <label class="label" for="user_email">
+            <span class="label-text">Email Address</span>
+          </label>
+          <input type="email" name="user[email]" id="user_email" class="input input-bordered w-full" placeholder="user@example.com" required>
+        </div>
+        <div class="modal-action">
+          <button type="button" class="btn" data-action="click->user-management#closeAddModal">Cancel</button>
+          <button type="submit" class="btn btn-primary">Add User</button>
+        </div>
+      <% end %>
+    </div>
+    <form method="dialog" class="modal-backdrop">
+      <button>close</button>
+    </form>
+  </dialog>
+
+  <!-- Delete User Modal -->
+  <dialog class="modal modal-bottom sm:modal-middle" data-user-management-target="deleteModal">
+    <div class="modal-box">
+      <h3 class="text-lg font-bold text-error">Delete User</h3>
+      <p class="py-4" data-user-management-target="deleteMessage">Are you sure you want to delete this user?</p>
+
+      <div class="form-control">
+        <label class="label cursor-pointer justify-start gap-3">
+          <input type="checkbox"
+                 class="checkbox checkbox-error"
+                 data-user-management-target="deleteCheckbox"
+                 data-action="change->user-management#toggleDeleteButton">
+          <span class="label-text">I understand this action cannot be undone</span>
+        </label>
+      </div>
+
+      <div class="modal-action">
+        <button type="button" class="btn" data-action="click->user-management#closeDeleteModal">Cancel</button>
+        <%= form_with url: "#", method: :delete, data: { user_management_target: "deleteForm", turbo: true } do %>
+          <button type="submit" class="btn btn-error" data-user-management-target="deleteButton" disabled>Delete User</button>
+        <% end %>
+      </div>
+    </div>
+    <form method="dialog" class="modal-backdrop">
+      <button>close</button>
+    </form>
+  </dialog>
+</div>

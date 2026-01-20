@@ -9,6 +9,9 @@ Rails.application.routes.draw do
   get "/profile", to: "profiles#show", as: :profile
   patch "/profile", to: "profiles#update"
 
+  # Admin - User Management
+  resources :users, only: [ :index, :create, :destroy ]
+
   # Tickets
   scope :tickets, as: :tickets do
     # Bode.lv Charter Flights (prices refreshed hourly by system)

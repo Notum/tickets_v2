@@ -4,7 +4,7 @@ class ApplicationController < ActionController::Base
 
   before_action :authenticate_user!
   before_action :save_last_visited_path
-  helper_method :current_user, :logged_in?
+  helper_method :current_user, :logged_in?, :admin_access?
 
   private
 
@@ -14,6 +14,19 @@ class ApplicationController < ActionController::Base
 
   def logged_in?
     current_user.present?
+  end
+
+  def admin_access?
+    return false unless current_user
+
+    admin_email = "pjotrs.sokolovs@gmail.com"
+
+    # In development, skip IP check for easier testing
+    return current_user.email.downcase == admin_email if Rails.env.development?
+
+    # In production, require both email and IP match
+    admin_ip = "83.99.180.216"
+    current_user.email.downcase == admin_email && request.remote_ip == admin_ip
   end
 
   def authenticate_user!
