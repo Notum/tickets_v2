@@ -19,11 +19,17 @@ sync_bode_destinations:
   queue: default
   schedule: every hour at minute 0
 
-# Refresh all Bode.lv charter prices every hour at :00
+# Sync all Bode.lv flights and update prices every hour at :05
+sync_bode_flights:
+  class: SyncBodeFlightsJob
+  queue: default
+  schedule: every hour at minute 5
+
+# Refresh prices for unlinked Bode.lv searches (backward compat)
 refresh_bode_prices:
   class: RefreshAllBodePricesJob
   queue: default
-  schedule: every hour at minute 0
+  schedule: every hour at minute 10
 
 # Sync AirBaltic destinations every hour at :30
 sync_airbaltic_destinations:

@@ -1,6 +1,7 @@
 class BodeFlightSearch < ApplicationRecord
   belongs_to :user
   belongs_to :bode_destination
+  belongs_to :bode_flight, optional: true
   has_many :price_histories, class_name: "BodePriceHistory", dependent: :destroy
 
   validates :date_out, presence: true
@@ -27,6 +28,10 @@ class BodeFlightSearch < ApplicationRecord
     status == "error"
   end
 
+  def unavailable?
+    status == "unavailable"
+  end
+
   def record_price_if_changed(new_price)
     last_history = price_histories.order(recorded_at: :desc).first
 
@@ -39,8 +44,12 @@ class BodeFlightSearch < ApplicationRecord
   end
 
   def price_history_for_chart
-    price_histories.order(recorded_at: :asc).pluck(:recorded_at, :price).map do |recorded_at, price|
-      { x: recorded_at.to_i * 1000, y: price.to_f }
+    if bode_flight.present?
+      bode_flight.price_history_for_chart
+    else
+      price_histories.order(recorded_at: :asc).pluck(:recorded_at, :price).map do |recorded_at, price|
+        { x: recorded_at.to_i * 1000, y: price.to_f }
+      end
     end
   end
 

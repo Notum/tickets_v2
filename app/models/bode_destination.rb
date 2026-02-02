@@ -1,4 +1,5 @@
 class BodeDestination < ApplicationRecord
+  has_many :bode_flights, dependent: :destroy
   has_many :bode_flight_searches, dependent: :destroy
 
   validates :name, presence: true

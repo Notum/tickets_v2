@@ -46,6 +46,7 @@
             <label class="label" for="flight_select">
               <span class="label-text">Available Flights</span>
             </label>
+            <div data-bode-search-target="monthFilter" class="flex flex-wrap gap-1 mb-1"></div>
             <select name="flight_select" id="flight_select"
                     class="select select-bordered w-full"
                     data-bode-search-target="flightSelect"
@@ -54,9 +55,10 @@
             </select>
           </div>
 
-          <!-- Hidden fields for dates -->
+          <!-- Hidden fields for dates and flight ID -->
           <input type="hidden" name="date_out" data-bode-search-target="dateOut">
           <input type="hidden" name="date_in" data-bode-search-target="dateIn">
+          <input type="hidden" name="bode_flight_id" data-bode-search-target="bodeFlightId">
 
           <!-- Submit Button -->
           <div class="form-control">
@@ -128,6 +130,8 @@
                     <span class="badge badge-warning badge-xs">Pending</span>
                   <% elsif search.error? %>
                     <span class="badge badge-error badge-xs">Error</span>
+                  <% elsif search.unavailable? %>
+                    <span class="badge badge-neutral badge-xs">Unavailable</span>
                   <% end %>
                 </div>
               </div>
@@ -223,6 +227,8 @@
                   <span class="badge badge-warning badge-xs ml-1">Pending</span>
                 <% elsif search.error? %>
                   <span class="badge badge-error badge-xs ml-1">Error</span>
+                <% elsif search.unavailable? %>
+                  <span class="badge badge-neutral badge-xs ml-1">Unavailable</span>
                 <% end %>
               </div>
             </div>

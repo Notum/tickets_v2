@@ -2,7 +2,8 @@ class RefreshAllBodePricesJob < ApplicationJob
   queue_as :default
 
   def perform
-    flight_searches = BodeFlightSearch.where(status: %w[pending priced error])
+    # Only process searches not linked to a BodeFlight (those are handled by SyncBodeFlightsJob)
+    flight_searches = BodeFlightSearch.where(bode_flight_id: nil).where(status: %w[pending priced error])
 
     Rails.logger.info "[RefreshAllBodePricesJob] Refreshing prices for #{flight_searches.count} flight searches"
 

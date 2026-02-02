@@ -2,7 +2,7 @@ module Tickets
   class BodeController < ApplicationController
     def index
       @destinations = BodeDestination.active.ordered
-      @saved_searches = current_user.bode_flight_searches.includes(:bode_destination).recent
+      @saved_searches = current_user.bode_flight_searches.includes(:bode_destination, :bode_flight).recent
       @selected_destination_id = params[:destination_id].to_i if params[:destination_id].present?
     end
 
@@ -23,14 +23,39 @@ module Tickets
         redirect_to tickets_bode_path and return
       end
 
-      @flight_search = current_user.bode_flight_searches.build(
+      # Look up BodeFlight by ID or by destination + dates
+      bode_flight = if params[:bode_flight_id].present?
+        BodeFlight.find_by(id: params[:bode_flight_id])
+      end
+      bode_flight ||= BodeFlight.find_by(bode_destination: destination, date_out: date_out, date_in: date_in)
+
+      attrs = {
         bode_destination: destination,
         date_out: date_out,
         date_in: date_in
-      )
+      }
+
+      if bode_flight
+        attrs.merge!(
+          bode_flight: bode_flight,
+          price: bode_flight.price,
+          airline: bode_flight.airline,
+          order_url: bode_flight.order_url,
+          free_seats: bode_flight.free_seats,
+          nights: bode_flight.nights,
+          status: "priced",
+          priced_at: Time.current
+        )
+      end
+
+      @flight_search = current_user.bode_flight_searches.build(attrs)
 
       if @flight_search.save
-        flash[:notice] = "Flight search saved! Prices will be updated on the next scheduled refresh."
+        # Record initial price history if linked to a flight with a price
+        @flight_search.record_price_if_changed(@flight_search.price) if @flight_search.price.present?
+
+        notice = bode_flight ? "Flight search saved!" : "Flight search saved! Prices will be updated on the next scheduled refresh."
+        flash[:notice] = notice
         redirect_to tickets_bode_path(destination_id: destination.id)
       else
         flash[:alert] = @flight_search.errors.full_messages.join(", ")
