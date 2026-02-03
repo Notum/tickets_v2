@@ -128,10 +128,15 @@ production:
     queue: default
     schedule: every hour at minute 0
 
+  sync_bode_flights:
+    class: SyncBodeFlightsJob
+    queue: default
+    schedule: every hour at minute 5
+
   refresh_bode_prices:
     class: RefreshAllBodePricesJob
     queue: default
-    schedule: every hour at minute 0
+    schedule: every hour at minute 10
 
   sync_airbaltic_destinations:
     class: SyncAirbalticDestinationsJob
