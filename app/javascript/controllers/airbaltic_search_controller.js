@@ -16,7 +16,9 @@ export default class extends Controller {
     "isDirectInInput",
     "priceSummary",
     "totalPrice",
-    "noFlightsMessage"
+    "noFlightsMessage",
+    "monthFilterOut",
+    "monthFilterIn"
   ]
 
   static values = {
@@ -28,6 +30,8 @@ export default class extends Controller {
     // Store outbound dates data for later use
     this.outboundDatesData = []
     this.inboundDatesData = []
+    this.selectedMonthOut = null
+    this.selectedMonthIn = null
 
     // If a destination is pre-selected, load its dates
     if (this.selectedDestinationValue) {
@@ -51,6 +55,8 @@ export default class extends Controller {
       this.priceSummaryTarget.classList.add("hidden")
     }
     this.hideNoFlightsMessage()
+    this.clearMonthFilter(this.hasMonthFilterOutTarget ? this.monthFilterOutTarget : null)
+    this.clearMonthFilter(this.hasMonthFilterInTarget ? this.monthFilterInTarget : null)
   }
 
   showNoFlightsMessage(message) {
@@ -87,11 +93,15 @@ export default class extends Controller {
 
       if (data.dates && data.dates.length > 0) {
         this.outboundDatesData = data.dates
-        this.populateDateSelectWithPrices(this.dateOutSelectTarget, data.dates)
+        this.selectedMonthOut = null
+        this.renderMonthFilter(data.dates, this.monthFilterOutTarget, "out")
+        this.populateDateSelectWithPrices(this.dateOutSelectTarget, data.dates, "out")
         this.dateOutContainerTarget.classList.remove("hidden")
         this.dateInContainerTarget.classList.add("hidden")
         this.submitButtonTarget.disabled = true
         this.priceSummaryTarget.classList.add("hidden")
+        this.selectedMonthIn = null
+        this.clearMonthFilter(this.monthFilterInTarget)
       } else {
         this.dateOutContainerTarget.classList.add("hidden")
         this.dateInContainerTarget.classList.add("hidden")
@@ -115,6 +125,8 @@ export default class extends Controller {
       this.dateInContainerTarget.classList.add("hidden")
       this.submitButtonTarget.disabled = true
       this.priceSummaryTarget.classList.add("hidden")
+      this.selectedMonthIn = null
+      this.clearMonthFilter(this.monthFilterInTarget)
       return
     }
 
@@ -139,7 +151,9 @@ export default class extends Controller {
 
         if (filteredDates.length > 0) {
           this.inboundDatesData = filteredDates
-          this.populateDateSelectWithPrices(this.dateInSelectTarget, filteredDates)
+          this.selectedMonthIn = null
+          this.renderMonthFilter(filteredDates, this.monthFilterInTarget, "in")
+          this.populateDateSelectWithPrices(this.dateInSelectTarget, filteredDates, "in")
           this.dateInContainerTarget.classList.remove("hidden")
           this.submitButtonTarget.disabled = true
           this.priceSummaryTarget.classList.add("hidden")
@@ -183,10 +197,20 @@ export default class extends Controller {
     }
   }
 
-  populateDateSelectWithPrices(selectElement, dates) {
+  populateDateSelectWithPrices(selectElement, dates, type) {
     selectElement.innerHTML = '<option value="">Select a date</option>'
 
+    const selectedMonth = type === "out" ? this.selectedMonthOut : this.selectedMonthIn
+    const dateOut = type === "in" ? this.dateOutSelectTarget.value : null
+
     dates.forEach(item => {
+      // Apply month filter
+      if (selectedMonth) {
+        const d = new Date(item.date)
+        const monthKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`
+        if (monthKey !== selectedMonth) return
+      }
+
       const date = new Date(item.date)
       const option = document.createElement("option")
       option.value = item.date
@@ -201,10 +225,76 @@ export default class extends Controller {
       if (item.is_direct) {
         label += " (Direct)"
       }
+      if (type === "in" && dateOut) {
+        const diffDays = Math.ceil(Math.abs(new Date(item.date) - new Date(dateOut)) / (1000 * 60 * 60 * 24))
+        label += ` — ${diffDays}d`
+      }
 
       option.textContent = label
       selectElement.appendChild(option)
     })
+  }
+
+  renderMonthFilter(dates, filterTarget, type) {
+    this.clearMonthFilter(filterTarget)
+
+    const months = new Map()
+    dates.forEach(item => {
+      const date = new Date(item.date)
+      const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`
+      if (!months.has(key)) {
+        const label = date.toLocaleDateString("en-US", { month: "short", year: "numeric" })
+        months.set(key, label)
+      }
+    })
+
+    if (months.size <= 1) return
+
+    const allPill = this.createPill("All", null, true, type)
+    filterTarget.appendChild(allPill)
+
+    months.forEach((label, key) => {
+      const pill = this.createPill(label, key, false, type)
+      filterTarget.appendChild(pill)
+    })
+  }
+
+  createPill(label, monthKey, isActive, type) {
+    const btn = document.createElement("button")
+    btn.type = "button"
+    btn.textContent = label
+    btn.dataset.monthKey = monthKey || ""
+    btn.className = isActive
+      ? "btn btn-xs btn-primary"
+      : "btn btn-xs btn-ghost"
+    btn.addEventListener("click", () => this.filterByMonth(monthKey, btn, type))
+    return btn
+  }
+
+  filterByMonth(monthKey, clickedBtn, type) {
+    const filterTarget = type === "out" ? this.monthFilterOutTarget : this.monthFilterInTarget
+
+    if (type === "out") {
+      this.selectedMonthOut = monthKey
+    } else {
+      this.selectedMonthIn = monthKey
+    }
+
+    filterTarget.querySelectorAll("button").forEach(btn => {
+      btn.className = btn === clickedBtn ? "btn btn-xs btn-primary" : "btn btn-xs btn-ghost"
+    })
+
+    if (type === "out") {
+      this.populateDateSelectWithPrices(this.dateOutSelectTarget, this.outboundDatesData, "out")
+    } else {
+      this.populateDateSelectWithPrices(this.dateInSelectTarget, this.inboundDatesData, "in")
+    }
+  }
+
+  clearMonthFilter(target) {
+    if (target) {
+      target.innerHTML = ""
+    }
   }
 
   formatDate(date) {
