@@ -10,7 +10,7 @@ class TurkishFlightSearch < ApplicationRecord
 
   before_save :calculate_total_price
 
-  scope :recent, -> { order(created_at: :desc) }
+  scope :recent, -> { order(date_out: :asc) }
   scope :priced, -> { where(status: "priced") }
   scope :pending, -> { where(status: "pending") }
 

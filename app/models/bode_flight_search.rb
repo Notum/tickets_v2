@@ -8,7 +8,7 @@ class BodeFlightSearch < ApplicationRecord
   validates :date_in, presence: true
   validate :date_in_after_date_out
 
-  scope :recent, -> { order(created_at: :desc) }
+  scope :recent, -> { order(date_out: :asc) }
   scope :priced, -> { where(status: "priced") }
   scope :pending, -> { where(status: "pending") }
 
