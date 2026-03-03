@@ -137,14 +137,17 @@ module Bode
     end
 
     def mark_stale_flights
-      # Flights not seen in the last sync cycle (>2 hours) are considered stale
+      # Flights not seen in the last sync cycle (>2 hours) are considered stale — removed from Bode.lv
       stale_flights = BodeFlight.where("last_seen_at < ?", 2.hours.ago).where("date_out >= ?", Date.current)
 
       stale_flights.find_each do |flight|
-        flight.bode_flight_searches.where(status: %w[pending priced]).find_each do |search|
-          search.update!(status: "unavailable")
-          Rails.logger.info "[Bode::FlightsSyncService] Marked search ##{search.id} as unavailable (flight not seen recently)"
+        flight.bode_flight_searches.where(status: %w[pending priced unavailable]).find_each do |search|
+          Rails.logger.info "[Bode::FlightsSyncService] Destroying search ##{search.id} (flight #{flight.bode_destination.name} #{search.date_out} - #{search.date_in} no longer available)"
+          search.destroy!
         end
+
+        flight.destroy!
+        Rails.logger.info "[Bode::FlightsSyncService] Destroyed stale flight ##{flight.id}"
       end
     end
 
