@@ -35,17 +35,19 @@ export default class extends Controller {
         fixed: {
           enabled: false
         },
-        x: {
-          show: false
-        },
-        y: {
-          formatter: (value) => `€${value.toFixed(2)}`,
-          title: {
-            formatter: () => ""
-          }
-        },
         marker: {
           show: false
+        },
+        custom: ({ series, seriesIndex, dataPointIndex, w }) => {
+          const value = series[seriesIndex][dataPointIndex]
+          const timestamp = w.globals.seriesX[seriesIndex][dataPointIndex]
+          const date = new Date(timestamp)
+          const day = date.getDate()
+          const month = date.toLocaleString("en-US", { month: "short" })
+          return `<div style="padding:4px 8px;line-height:1.1;">
+                    <div style="font-size:12px;font-weight:600;">€${value.toFixed(2)}</div>
+                    <div style="font-size:9px;color:#888;">${day}/${month}</div>
+                  </div>`
         }
       }
     }

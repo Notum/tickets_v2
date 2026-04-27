@@ -32,8 +32,8 @@ class CleanupExpiredFlightSearchesService
   private
 
   def cleanup_model(model)
-    # Delete flight searches where the outbound date is before today
-    expired_searches = model.where("date_out < ?", Date.current)
+    # Delete flight searches the day before departure (and any older)
+    expired_searches = model.where("date_out <= ?", Date.current + 1.day)
     count = expired_searches.count
 
     if count > 0

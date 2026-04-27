@@ -12,9 +12,9 @@ class RefreshAllFlydubaiPricesJob < ApplicationJob
     failures = []
 
     flight_searches.find_each do |search|
-      # Skip if flight dates are in the past
-      if search.date_out < Date.current
-        Rails.logger.info "[RefreshAllFlydubaiPricesJob] Skipping flight search ##{search.id} - departure date is in the past"
+      # Skip if departure is today or earlier (flights disappear the day before departure)
+      if search.date_out <= Date.current + 1.day
+        Rails.logger.info "[RefreshAllFlydubaiPricesJob] Skipping flight search ##{search.id} - departure within one day"
         next
       end
 
