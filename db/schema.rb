@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_02_02_114045) do
+ActiveRecord::Schema[8.0].define(version: 2026_05_01_155838) do
   create_table "airbaltic_destinations", force: :cascade do |t|
     t.string "code", null: false
     t.string "name", null: false
@@ -278,6 +278,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_02_114045) do
     t.datetime "arrival_time_out"
     t.datetime "departure_time_in"
     t.datetime "arrival_time_in"
+    t.integer "unavailable_strikes", default: 0, null: false
     t.index ["ryanair_destination_id"], name: "index_ryanair_flight_searches_on_ryanair_destination_id"
     t.index ["user_id"], name: "index_ryanair_flight_searches_on_user_id"
   end

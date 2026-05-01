@@ -72,6 +72,10 @@ module Ryanair
     end
 
     def parse_and_save_prices(data)
+      # Empty fares array means Ryanair no longer offers this flight on these dates
+      fares = data.is_a?(Hash) ? data["fares"] : nil
+      return mark_unavailable if fares.is_a?(Array) && fares.empty?
+
       outbound_data = extract_best_fare(data, "outbound")
       inbound_data = extract_best_fare(data, "inbound")
 
@@ -94,6 +98,7 @@ module Ryanair
           arrival_time_in: inbound_data[:arrival_time],
           status: "priced",
           priced_at: Time.current,
+          unavailable_strikes: 0,
           api_response: data.to_json
         )
 
@@ -167,6 +172,12 @@ module Ryanair
     def update_with_error(message)
       @flight_search.update!(status: "error", api_response: { error: message }.to_json)
       { success: false, error: message }
+    end
+
+    def mark_unavailable
+      Rails.logger.info "[Ryanair::PriceFetchService] No fares returned for search ##{@flight_search.id} — flight unavailable"
+      @flight_search.update!(status: "unavailable", api_response: { unavailable: true }.to_json)
+      { success: false, unavailable: true }
     end
   end
 end

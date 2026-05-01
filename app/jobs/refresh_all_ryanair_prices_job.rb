@@ -1,8 +1,11 @@
 class RefreshAllRyanairPricesJob < ApplicationJob
   queue_as :default
 
+  # A search is destroyed after this many consecutive cycles of returning no fares
+  UNAVAILABLE_STRIKES_LIMIT = 3
+
   def perform
-    flight_searches = RyanairFlightSearch.where(status: "priced").or(RyanairFlightSearch.where(status: "error"))
+    flight_searches = RyanairFlightSearch.where(status: %w[priced error unavailable])
 
     Rails.logger.info "[RefreshAllRyanairPricesJob] Refreshing prices for #{flight_searches.count} flight searches"
 
@@ -32,6 +35,8 @@ class RefreshAllRyanairPricesJob < ApplicationJob
             Rails.logger.info "[RefreshAllRyanairPricesJob] Price drop of #{result[:price_drop][:savings]} EUR below threshold for user #{user.id}"
           end
         end
+      elsif result[:unavailable]
+        handle_unavailable(search)
       else
         # Track failure for admin notification
         failures << {
@@ -60,5 +65,19 @@ class RefreshAllRyanairPricesJob < ApplicationJob
     end
 
     Rails.logger.info "[RefreshAllRyanairPricesJob] Completed price refresh. Sent notifications to #{price_drops_by_user.keys.count} users. Failures: #{failures.count}"
+  end
+
+  private
+
+  def handle_unavailable(search)
+    strikes = search.unavailable_strikes + 1
+
+    if strikes >= UNAVAILABLE_STRIKES_LIMIT
+      Rails.logger.info "[RefreshAllRyanairPricesJob] Destroying search ##{search.id} (#{search.ryanair_destination&.code} #{search.date_out} - #{search.date_in}) — unavailable for #{strikes} consecutive cycles"
+      search.destroy!
+    else
+      search.update!(unavailable_strikes: strikes)
+      Rails.logger.info "[RefreshAllRyanairPricesJob] Search ##{search.id} unavailable (strike #{strikes}/#{UNAVAILABLE_STRIKES_LIMIT})"
+    end
   end
 end
